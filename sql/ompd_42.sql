@@ -402,7 +402,7 @@ CREATE TABLE IF NOT EXISTS `album_id` (
   KEY `album` (`album_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-ALTER TABLE `track`
+ALTER TABLE `album_id`
   ADD FULLTEXT KEY `path` (`path`);
   
 -- --------------------------------------------------------
