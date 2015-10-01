@@ -241,11 +241,6 @@ if($listlength > $cfg['current_playlist_max_displayed_items']) {
 	<td class="space right"></td>
 </tr>
 <?php
-# TODO: move to somewhere else
-function pathhash($string) {
-	return str_pad(dechex(crc32($string)), 8, '0', STR_PAD_LEFT);
-}
-
 
 $playtime = array();
 $track_id = array();

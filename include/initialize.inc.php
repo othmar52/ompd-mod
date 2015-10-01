@@ -716,4 +716,67 @@ function checkDefaultFavorites() {
 	//echo 'id=' . $cfg['favorite_id'];
 }
 
+
+function pathhash($string) {
+	return str_pad(dechex(crc32($string)), 8, '0', STR_PAD_LEFT);
+}
+
+/**
+ * converts exotic characters in similar [A-Za-z0-9]
+ * and removes all other characters (also whitspaces and punctiations)
+ * 
+ * @param $string string	input string
+ * @return string the converted string
+ * 
+ *  
+ */
+function az09($string) {
+    $c = array();
+    $c[] = array('a','à','á','â','ã','ä','å','ª');
+    $c[] = array('A','À','Á','Â','Ã','Ä','Å');
+    $c[] = array('e','é','ë','ê','è');
+    $c[] = array('E','È','É','Ê','Ë','€');
+    $c[] = array('i','ì','í','î','ï');
+    $c[] = array('I','Ì','Í','Î','Ï','¡');
+    $c[] = array('o','ò','ó','ô','õ','ö','ø');
+    $c[] = array('O','Ò','Ó','Ô','Õ','Ö');
+    $c[] = array('u','ù','ú','û','ü');
+    $c[] = array('U','Ù','Ú','Û','Ü');
+    $c[] = array('n','ñ');
+    $c[] = array('y','ÿ','ý');
+    $c[] = array('Y','Ý','Ÿ');
+    $c[] = array('x','×');
+    $c[] = array('ae','æ');
+    $c[] = array('AE','Æ');
+    $c[] = array('c','ç','¢','©');
+    $c[] = array('C','Ç');
+    $c[] = array('D','Ð');
+    $c[] = array('s','ß','š');
+    $c[] = array('S','$','§','Š');
+    $c[] = array('tm','™');
+    $c[] = array('r','®');
+    #$c[] = array('(','{', '[', '<');
+    #$c[] = array(')','}', ']', '>');
+    $c[] = array('0','Ø');
+    $c[] = array('2','²');
+    $c[] = array('3','³');
+    $c[] = array('and','&');
+    for($ca=0; $ca<count($c); $ca++){
+            for($e=1; $e<count($c[$ca]); $e++){
+                    $string = str_replace(($c[$ca][$e]),$c[$ca][0], $string);
+            }
+    }
+    unset($c);
+	$string = preg_replace("/[^a-zA-Z0-9". $preserve ."]/", "", $string);
+
+
+
+    $string = strtolower($string);
+
+    //echo  $string . "\n"; die();
+    return($string);
+}
+
+
+
 ?>
