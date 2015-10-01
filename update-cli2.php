@@ -90,7 +90,7 @@ function fetchAlbumImages($albumDir, $album_id) {
 		foreach($musicFiles as $i) {
 			$coverBinary = writeEmbeddedCoverToTempfile($i);
 			if($coverBinary !== FALSE) {
-				// md5() of extracted images of same album files semms to be different - lets use filesize
+				// md5() of extracted images of same album files seems to be different - lets use filesize
 				$imageFiles[filesize($coverBinary)] = $coverBinary;
 			}	
 		}

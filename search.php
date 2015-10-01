@@ -1,6 +1,6 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | O!MPD, Copyright © 2015 Artur Sierzant		                         |
+//  | O!MPD, Copyright ï¿½ 2015 Artur Sierzant		                         |
 //  | http://www.ompd.pl                   									 |
 //  |                                                                        |
 //  | This program is free software: you can redistribute it and/or modify   |
@@ -84,6 +84,7 @@ function search_all() {
 	album_artist();
 	album_title();
 	track_artist();
+	directory_match();
 	track_title();
 	
 	echo '<script type="text/javascript">';
@@ -353,7 +354,54 @@ function album_title() {
 	} 
 }
 // End of Album title
+
+
+
 	
+//  +------------------------------------------------------------------------+
+//  | directory match                                                          |
+//  +------------------------------------------------------------------------+
+	
+function directory_match() {
+	global $cfg, $db, $size, $search_string, $group_found, $match_found;
+	
+	$query = mysql_query('SELECT album_id,path FROM album_id WHERE path like "%' . mysql_real_escape_string($search_string) . '%" ORDER BY path LIMIT 1000');	
+
+	$rows = mysql_num_rows($query);
+	if ($rows > 0) {
+		$match_found = true;
+		$group_found = 'DD';
+	?>
+	<h1 onclick='toggleSearchResults("DD");' class="pointer"><i id="iconSearchResultsDD" class="fa fa-chevron-circle-down icon-anchor"></i> Path (<?php if ($rows > 1) {
+			echo $rows . " matches found";
+		}
+		else {
+			$album = mysql_fetch_assoc($query);
+			echo $rows . " match found: " . $album['path'];
+		}
+		?>)
+	</h1>
+	<div class="search_artist" id="searchResultsDD">
+	<?php
+	if ($rows > 1) {
+		while ($album = mysql_fetch_assoc($query)) {
+	?>
+	<p>
+	<a href="index.php?action=view3&amp;album_id=<?php echo rawurlencode($album['album_id']); ?>"><?php echo html(basename($album['path'])); ?></a>
+	</p>
+	<?php
+		}
+	}
+	?>
+	</div>
+	<?php
+	} 
+}
+// End of directory match
+
+
+
+
 	
 //  +------------------------------------------------------------------------+
 //  | track title                                                            |
