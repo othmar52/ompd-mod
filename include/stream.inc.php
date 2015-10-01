@@ -1,6 +1,6 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -26,6 +26,7 @@
 //  | Stream file                                                            |
 //  +------------------------------------------------------------------------+
 function streamFile($file, $mime_type, $content_disposition = '', $filename = '', $etag = '') {
+	ini_set('zlib.output_compression', 'off');
 	ini_set('max_execution_time', 0);
 	
 	$filename	= str_replace('"', '\"', $filename); // Needed for double quoted content disposition
@@ -82,7 +83,7 @@ function streamFile($file, $mime_type, $content_disposition = '', $filename = ''
 		if ($content_disposition != '' && $filename != '')
 			header('Content-Disposition: ' . $content_disposition . '; filename="' . $filename . '"');
 					
-		$buffer		= 1024 * 8; // 8
+		$buffer		= 1024 * 8;
 		$bytes_left	= $length;
 		
 		$filehandle = @fopen($file, 'rb') or exit();
@@ -115,6 +116,7 @@ function streamFile($file, $mime_type, $content_disposition = '', $filename = ''
 //  | Stream data                                                            |
 //  +------------------------------------------------------------------------+
 function streamData($data, $mime_type, $content_disposition = '', $filename = '', $etag = '') {
+	ini_set('zlib.output_compression', 'off');
 	ini_set('max_execution_time', 0);
 	
 	$filename	= str_replace('"', '\"', $filename); // Needed for double quoted content disposition
@@ -177,3 +179,4 @@ function streamData($data, $mime_type, $content_disposition = '', $filename = ''
 		echo $data;
 	}
 }
+?>

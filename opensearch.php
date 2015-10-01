@@ -1,6 +1,6 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -27,7 +27,7 @@
 //  +------------------------------------------------------------------------+
 require_once('include/initialize.inc.php');
 
-$action = @$_GET['action'];
+$action = get('action');
 
 if		($action == 'installAlbumArtist')	installAlbumArtist();
 elseif	($action == 'installTrackArtist')	installTrackArtist();
@@ -114,17 +114,17 @@ function suggestAlbumArtist() {
 	global $cfg, $db;
 	header('Content-type: application/json');
 		
-	$artist = (string) @$_GET['artist'];
+	$artist = get('artist');
 	authenticateOpensearch($artist);
 	
-	$query = mysqli_query($db, 'SELECT artist_alphabetic FROM album
-		WHERE artist_alphabetic LIKE "%' . mysqli_real_escape_like($db, $artist) . '%"
-		OR artist LIKE "%' . mysqli_real_escape_like($db, $artist) . '%"
-		OR artist SOUNDS LIKE "' . mysqli_real_escape_string($db, $artist) . '"
+	$query = mysql_query('SELECT artist_alphabetic FROM album
+		WHERE artist_alphabetic LIKE "%' . mysql_real_escape_like($artist) . '%"
+		OR artist LIKE "%' . mysql_real_escape_like($artist) . '%"
+		OR artist SOUNDS LIKE "' . mysql_real_escape_string($artist) . '"
 		GROUP BY artist_alphabetic ORDER BY artist_alphabetic LIMIT ' . (int) $cfg['autosuggest_limit']);
 	
 	$data = array();
-	while ($album = mysqli_fetch_assoc($query))
+	while ($album = mysql_fetch_assoc($query))
 		$data[] = (string) $album['artist_alphabetic'];
 	$data = array($artist, $data);
 		
@@ -141,16 +141,16 @@ function suggestTrackArtist() {
 	global $cfg, $db;
 	header('Content-type: application/json');
 	
-	$artist = (string) @$_GET['artist'];
+	$artist = get('artist');
 	authenticateOpensearch($artist);
 	
-	$query = mysqli_query($db, 'SELECT artist FROM track
-		WHERE artist LIKE "%' . mysqli_real_escape_like($db, $artist) . '%"
-		OR artist SOUNDS LIKE "' . mysqli_real_escape_string($db, $artist) . '"
+	$query = mysql_query('SELECT artist FROM track
+		WHERE artist LIKE "%' . mysql_real_escape_like($artist) . '%"
+		OR artist SOUNDS LIKE "' . mysql_real_escape_string($artist) . '"
 		GROUP BY artist ORDER BY artist LIMIT ' . (int) $cfg['autosuggest_limit']);
 	
 	$data = array();
-	while ($track = mysqli_fetch_assoc($query))
+	while ($track = mysql_fetch_assoc($query))
 		$data[] = (string) $track['artist'];
 	$data = array($artist, $data);
 			
@@ -167,16 +167,16 @@ function suggestTrackTitle() {
 	global $cfg, $db;
 	header('Content-type: application/json');
 	
-	$title = (string) @$_GET['title'];
+	$title = get('title');
 	authenticateOpensearch($title);
 	
-	$query = mysqli_query($db, 'SELECT title FROM track
-		WHERE title LIKE "%' . mysqli_real_escape_like($db, $title) . '%"
-		OR title SOUNDS LIKE "' . mysqli_real_escape_string($db, $title) . '"
+	$query = mysql_query('SELECT title FROM track
+		WHERE title LIKE "%' . mysql_real_escape_like($title) . '%"
+		OR title SOUNDS LIKE "' . mysql_real_escape_string($title) . '"
 		GROUP BY title ORDER BY title LIMIT ' . (int) $cfg['autosuggest_limit']);
 	
 	$data = array();
-	while ($track = mysqli_fetch_assoc($query))
+	while ($track = mysql_fetch_assoc($query))
 		$data[] = (string) $track['title'];
 	$data = array($title, $data);
 		
@@ -194,10 +194,10 @@ function authenticateOpensearch($input) {
 	header('Expires: Mon, 9 Oct 2000 18:00:00 GMT');
 	header('Cache-Control: no-store, no-cache, must-revalidate');
 		
-	$sid 		= @$_COOKIE['netjukebox_sid'];
-	$version	= @$_GET['version'];
-	$query		= mysqli_query($db, 'SELECT logged_in, idle_time, ip, user_agent FROM session WHERE sid = BINARY "' . mysqli_real_escape_string($db, $sid) . '"');
-	$session	= mysqli_fetch_assoc($query);
+	$sid 		= cookie('netjukebox_sid');
+	$version	= get('version');
+	$query		= mysql_query('SELECT logged_in, idle_time, ip, user_agent FROM session WHERE sid = BINARY "' . mysql_real_escape_string($sid) . '"');
+	$session	= mysql_fetch_assoc($query);
 	
 	if ($sid == '') {
 		$data = array('Allow third-party cookies,', 'or add an exception for this domain!');
@@ -224,3 +224,4 @@ function authenticateOpensearch($input) {
 	echo safe_json_encode($data);
 	exit();
 }
+?>

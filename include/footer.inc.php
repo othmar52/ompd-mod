@@ -1,6 +1,10 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | O!MPD, Copyright © 2015 Artur Sierzant		                         |
+//  | http://www.ompd.pl                                             		 |
+//  |                                                                        |
+//  |                                                                        |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -25,12 +29,30 @@
 //  +------------------------------------------------------------------------+
 //  | footer.inc.php                                                         |
 //  +------------------------------------------------------------------------+
-$footer = '<ul id="footer">' . "\n\t";
-$footer .= ($cfg['username'] != '') ? '<li><a href="index.php?authenticate=logout">Logout: ' . html($cfg['username']) . '</a></li><!--' . "\n\t" . '-->' : '';
-$footer .= '<li><a href="about.php">netjukebox ' . html(NJB_VERSION) . '</a></li><!--' . "\n";
-$footer .= "\t" . '--><li><span>Script execution time: ' . executionTime() . '</span></li>' . "\n";
-$footer .= '</ul>' . "\n";
-$footer .= '<script type="text/javascript">' . (@$_COOKIE['netjukebox_sid'] ? 'init(); sessionCookie(); window.onbeforeunload = sessionCookie;' : 'init();') . '</script>' . "\n";
-
+if (isset($cfg['footer']) && $cfg['footer'] == 'close') {
+	echo '<script type="text/javascript">document.getElementById(\'execution_time\').innerHTML=\'' . executionTime() . '\';</script>' . "\n";
+	echo '</body>' . "\n";
+	echo '</html>' . "\n";
+	echo '<!-- end of file -->' . "\n";
+	exit();
+}
+$footer = ($cfg['username'] != '') ? '| <a href="index.php?authenticate=logout">Logout: ' . html($cfg['username']) . '</a> ' : '';
+$footer .= '| <a href="about.php">O!MPD ' . html(NJB_VERSION) . '</a> ';
+$footer .= '| Script execution time: <span id="execution_time">' . executionTime() . '</span> |';
 require_once(NJB_HOME_DIR . 'skin/' . $cfg['skin'] . '/template.footer.php');
-exit();
+
+if (isset($cfg['footer']) && $cfg['footer'] == 'dynamic') {
+	echo '<!-- dynamic content -->' . "\n";
+	@ob_flush();
+	flush();
+}
+else { 
+	echo '<script type="text/javascript">';
+	echo 'hideSpinner();';
+	echo '</script>';
+	echo '</body>' . "\n";
+	echo '</html>' . "\n";
+	echo '<!-- end of file -->' . "\n";
+	exit();
+}
+?>

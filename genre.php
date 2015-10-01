@@ -1,6 +1,6 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -26,12 +26,12 @@
 //  | genre.php                                                              |
 //  +------------------------------------------------------------------------+
 require_once('include/initialize.inc.php');
-$cfg['menu'] = 'media';
+$cfg['menu'] = 'Library';
 
-$action = @$_REQUEST['action'];
+$action			= getpost('action');
 
-if		($action == 'selectGenre')			selectGenre();
-elseif	($action == 'saveSelectGenre')		saveSelectGenre();
+if		($action == 'edit')					edit();
+elseif	($action == 'save')					save();
 elseif	($action == 'genreStructure')		genreStructure();
 elseif	($action == 'editGenreStructure')	editGenreStructure();
 elseif	($action == 'saveGenreStructure')	{saveGenreStructure();	genreStructure();}
@@ -51,12 +51,12 @@ exit();
 //  +------------------------------------------------------------------------+
 function genreTree($genre_id, &$genre_id_array, &$genre_array) {
 	global $db;
-	$query = mysqli_query($db, 'SELECT genre_id, genre FROM genre WHERE genre_id LIKE "' . mysqli_real_escape_like($db, $genre_id) . '_" ORDER BY genre');
+	$query = mysql_query("SELECT * FROM genre WHERE genre != '' ORDER BY genre");
 	
-	while ($genre = mysqli_fetch_assoc($query)) {
+	while ($genre = mysql_fetch_assoc($query)) {
 		$genre_id_array[] = $genre['genre_id'];
 		$genre_array[]    = $genre['genre'];
-	    genreTree($genre['genre_id'], $genre_id_array, $genre_array);
+	    //genreTree($genre['genre_id'], $genre_id_array, $genre_array);
 	}
 }
 
@@ -64,19 +64,19 @@ function genreTree($genre_id, &$genre_id_array, &$genre_array) {
 
 
 //  +------------------------------------------------------------------------+
-//  | Select genre                                                           |
+//  | Edit genre                                                             |
 //  +------------------------------------------------------------------------+
-function selectGenre() {
+function edit() {
 	global $cfg, $db;
 	authenticate('access_admin');
 	
-	$album_id		= @$_GET['album_id'];
-	$album_id_array	= @$_POST['album_id_array'];
-	$genre_id		= @$_POST['genre_id'];
-	$artist			= @$_POST['artist'];
-	$filter			= @$_POST['filter'];
-	$order			= @$_POST['order'];
-	$sort			= @$_POST['sort'];
+	$album_id		= get('album_id');
+	$album_id_array	= post('album_id_array');
+	$genre_id		= post('genre_id');
+	$artist			= post('artist');
+	$filter			= post('filter');
+	$order			= post('order');
+	$sort			= post('sort');
 	
 	if ($album_id && $cfg['album_edit_genre'] == false)
 		message(__FILE__, __LINE__, 'error', '[b]Error[/b][br]Edit album genre disabled');
@@ -84,12 +84,12 @@ function selectGenre() {
 		$referer = 'index.php?action=view3&amp;album_id=' . rawurlencode($album_id);
 		$album_id_array = array($album_id);
 		
-		$query = mysqli_query($db, 'SELECT artist_alphabetic, artist, album, year, month
+		$query = mysql_query('SELECT artist_alphabetic, artist, album, year, month
 			FROM album
-			WHERE album_id = "' . mysqli_real_escape_string($db, $album_id) . '"');
-		$album = mysqli_fetch_assoc($query);
+			WHERE album_id = "' . mysql_real_escape_string($album_id) . '"');
+		$album = mysql_fetch_assoc($query);
 		
-		// Navigator
+		// formattedNavigator
 		$nav			= array();
 		$nav['name'][]	= 'Media';
 		$nav['url'][]	= 'index.php';
@@ -97,7 +97,7 @@ function selectGenre() {
 		$nav['url'][]	= 'index.php?action=view2&amp;artist=' . rawurlencode($album['artist_alphabetic']);
 		$nav['name'][]	= $album['album'];
 		$nav['url'][]	= 'index.php?action=view3&amp;album_id=' . rawurlencode($album_id);
-		$nav['name'][]	= 'Select genre';
+		$nav['name'][]	= 'Edit genre';
 	}
 	else {
 		$referer = 'index.php?action=view2';
@@ -106,13 +106,13 @@ function selectGenre() {
 		$referer .= '&amp;order=' . rawurlencode($order);
 		$referer .= '&amp;sort=' . rawurlencode($sort);
 		
-		// Navigator
+		// formattedNavigator
 		$nav			= array();
 		$nav['name'][]	= 'Media';
 		$nav['url'][]	= 'index.php';
 		$nav['name'][]	= 'Back';
 		$nav['url'][]	= $referer;
-		$nav['name'][]	= 'Select genre';
+		$nav['name'][]	= 'Edit genre';
 	}
 	
 	if (empty($album_id_array) || is_array($album_id_array) == false) {
@@ -122,8 +122,8 @@ function selectGenre() {
 	
 	require_once('include/header.inc.php');
 ?>
-<form action="genre.php" method="post" id="genreform">
-	<input type="hidden" name="action" value="saveSelectGenre">
+<form action="genre.php" method="post" name="genreform" id="genreform">
+	<input type="hidden" name="action" value="save">
 	<input type="hidden" name="album_id" value="<?php echo html($album_id); ?>">
 	<input type="hidden" name="sign" value="<?php echo $cfg['sign']; ?>">
 	<input type="hidden" name="artist" value="<?php echo html($artist); ?>">
@@ -132,47 +132,51 @@ function selectGenre() {
 	<input type="hidden" name="sort" value="<?php echo html($sort); ?>">
 	<input type="hidden" name="genre_id" value="">
 <?php
-	for ($i = 0; $i < count($album_id_array); $i++)
+	for ($i=0; $i < count($album_id_array); $i++)
 		echo "\t" . '<input type="hidden" name="album_id_array[]" value="' . html($album_id_array[$i]) . '">' . "\n";
 	
-	function escape_mysqli($string) {
+	function escape_mysql($string) {
 		global $db;
-		return mysqli_real_escape_string($db, $string);
+		return mysql_real_escape_string($string);
 	}
 	
-	$list = array_map('escape_mysqli', $album_id_array);
+	$list = array_map('escape_mysql', $album_id_array);
 	$list = '"' . implode('","', $list) . '"';
 	
-	$query = mysqli_query($db, 'SELECT genre_id, COUNT(genre_id) AS counter
+	$query = mysql_query('SELECT genre_id, COUNT(genre_id) AS counter
 		FROM album
 		WHERE genre_id != "" AND album_id IN (' . $list . ')
 		GROUP BY genre_id
 		ORDER BY counter DESC');
-	$check_genre_id = mysqli_fetch_assoc($query);
+	$check_genre_id = mysql_fetch_assoc($query);
 	$check_genre_id = $check_genre_id['genre_id'];
 	
 	$genre_id_array = array();
 	$genre_array 	= array();
 	genreTree('', $genre_id_array, $genre_array);
-	$i = 0;
+	$i=0;
 ?>
-<table class="border">
+<table cellspacing="0" cellpadding="0" class="border">
 <tr class="header">
 	<td class="space"></td>
 	<td>Genre</td>
 	<td class="space"></td>
 </tr>
+<tr class="line"><td colspan="3"></td></tr>
 <tr class="<?php if (empty($check_genre_id)) echo 'select'; else echo ($i & 1) ? 'even mouseover' : 'odd mouseover'; $i++ ?>">
 	<td></td>
-	<td><a href="javascript:genreform.genre_id.value='';genreform.submit();"><img src="<?php echo $cfg['img']; ?>small_genre.png" alt="" class="small space">Root</a></td>
+	<td><a href="javascript:document.genreform.genre_id.value='';document.genreform.submit();"><img src="<?php echo $cfg['img']; ?>small_genre.png" alt="" class="small space">Root</a></td>
 	<td></td>
 </tr>
 <?php
 	foreach ($genre_array as $key => $genre) {
-		$genre_id = $genre_id_array[$key]; ?>
+		$genre_id = $genre_id_array[$key];
+		$lenght = strlen($genre_id);
+		$tab = str_repeat('&nbsp;', $lenght * 4); 
+?>
 <tr class="<?php if ($check_genre_id == $genre_id) echo 'select'; else echo ($i & 1) ? 'even mouseover' : 'odd mouseover'; $i++ ?>">
 	<td></td>
-	<td><a href="javascript:genreform.genre_id.value='<?php echo $genre_id; ?>';genreform.submit();"><img src="<?php echo $cfg['img']; ?>small_genre.png" alt="" class="small space" style="margin-left: <?php echo strlen($genre_id) * 10; ?>px;"><?php echo html($genre); ?></a></td>
+	<td><?php echo $tab; ?><a href="javascript:document.genreform.genre_id.value='<?php echo $genre_id; ?>';document.genreform.submit();"><img src="<?php echo $cfg['img']; ?>small_genre.png" alt="" class="small space"><?php echo html($genre); ?></a></td>
 	<td></td>
 </tr>
 <?php
@@ -187,24 +191,24 @@ function selectGenre() {
 
 
 //  +------------------------------------------------------------------------+
-//  | Save select genre                                                      |
+//  | Save                                                                   |
 //  +------------------------------------------------------------------------+
-function saveSelectGenre() {
+function save() {
 	global $db;
 	authenticate('access_admin', false, true, true);
 	
-	$album_id		= @$_POST['album_id'];
-	$album_id_array	= @$_POST['album_id_array'];
-	$genre_id		= @$_POST['genre_id'];
-	$artist			= @$_POST['artist'];
-	$filter			= @$_POST['filter'];
-	$order			= @$_POST['order'];
-	$sort			= @$_POST['sort'];
+	$album_id		= post('album_id');
+	$album_id_array	= post('album_id_array');
+	$genre_id		= post('genre_id');
+	$artist			= post('artist');
+	$filter			= post('filter');
+	$order			= post('order');
+	$sort			= post('sort');
 	
-	for ($i = 0; $i < count($album_id_array); $i++) {
-		mysqli_query($db, 'UPDATE album
-			SET genre_id	= "' . mysqli_real_escape_string($db, $genre_id) . '"
-			WHERE album_id	= "' . mysqli_real_escape_string($db, $album_id_array[$i]) . '"');
+	for ($i=0; $i < count($album_id_array); $i++) {
+		mysql_query('UPDATE album
+			SET genre_id	= "' . mysql_real_escape_string($genre_id) . '"
+			WHERE album_id	= "' . mysql_real_escape_string($album_id_array[$i]) . '"');
 	}
 	
 	if ($album_id) {
@@ -234,33 +238,36 @@ function genreStructure() {
 	global $cfg, $db;
 	authenticate('access_admin');
 	
-	// Navigator
+	// formattedNavigator
 	$nav			= array();
 	$nav['name'][]	= 'Configuration';
 	$nav['url'][]	= 'config.php';
 	$nav['name'][]	= 'Genre structure';
 	require_once('include/header.inc.php');
 ?>
-<table class="border">
+<table cellspacing="0" cellpadding="0" class="border">
 <tr class="header">
 	<td class="space"></td>
 	<td>Genre</td>
 	<td class="textspace"></td>
-	<td><a href="genre.php?action=addGenre" title="Add genre"><img src="<?php echo $cfg['img']; ?>small_header_new.png" alt="" class="small"></a></td>
+	<td><a href="genre.php?action=addGenre" onMouseOver="return overlib('Add genre');" onMouseOut="return nd();"><img src="<?php echo $cfg['img']; ?>small_header_new.png" alt="" class="small"></a></td>
 	<td class="space"></td>
 </tr>
+<tr class="line"><td colspan="5"></td></tr>
 <?php
 	$i=0;
 	$genre_id_array = array();
 	$genre_array 	= array();
 	genreTree('', $genre_id_array, $genre_array);
 	foreach ($genre_array as $key => $genre) {
-		$genre_id = $genre_id_array[$key]; ?>
+		$genre_id = $genre_id_array[$key];
+		$lenght = strlen($genre_id);
+		$tab = str_repeat('&nbsp;', ($lenght - 1) * 4); ?>
 <tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?> mouseover">
 	<td></td>
-	<td><a href="genre.php?action=editGenreStructure&amp;genre_id=<?php echo $genre_id; ?>"><img src="<?php echo $cfg['img']; ?>small_edit.png" alt="" class="small space" style="margin-left: <?php echo (strlen($genre_id) -1) * 10; ?>px;"><?php echo html($genre); ?></a></td>
+	<td><?php echo $tab; ?><a href="genre.php?action=editGenreStructure&amp;genre_id=<?php echo $genre_id; ?>" onMouseOver="return overlib('Edit');" onMouseOut="return nd();"><img src="<?php echo $cfg['img']; ?>small_edit.png" alt="" class="small space"><?php echo html($genre); ?></a></td>
 	<td></td>
-	<td><a href="genre.php?action=deleteGenre&amp;genre_id=<?php echo $genre_id; ?>&amp;sign=<?php echo $cfg['sign']; ?>" onclick="return confirm('Are you sure you want to delete genre: <?php echo html($genre); ?>?');"><img src="<?php echo $cfg['img']; ?>small_delete.png" alt="" class="small"></a></td>
+	<td><a href="genre.php?action=deleteGenre&amp;genre_id=<?php echo $genre_id; ?>&amp;sign=<?php echo $cfg['sign']; ?>" onClick="return confirm('Are you sure you want to delete genre: <?php echo html($genre); ?>?');" onMouseOver="return overlib('Delete');" onMouseOut="return nd();"><img src="<?php echo $cfg['img']; ?>small_delete.png" alt="" class="small"></a></td>
 	<td></td>
 </tr>
 <?php
@@ -280,16 +287,16 @@ function editGenreStructure() {
 	global $cfg, $db;
 	authenticate('access_admin');
 	
-	$genre_id = @$_GET['genre_id'];
+	$genre_id = get('genre_id');
 	
 	if (preg_match('#[^a-z]#', $genre_id))
 		message(__FILE__, __LINE__, 'error', '[b]This is not a valid genre_id:[/b][br]' . $genre_id);
 	
-	$query = mysqli_query($db, 'SELECT genre FROM genre WHERE genre_id = "' . mysqli_real_escape_like($db, $genre_id) . '"');
-	$temp = mysqli_fetch_assoc($query);
+	$query = mysql_query('SELECT genre FROM genre WHERE genre_id = "' . mysql_real_escape_like($genre_id) . '"');
+	$temp = mysql_fetch_assoc($query);
 	$genre = $temp['genre'];
 	
-	// Navigator
+	// formattedNavigator
 	$nav			= array();
 	$nav['name'][]	= 'Configuration';
 	$nav['url'][]	= 'config.php';
@@ -298,11 +305,11 @@ function editGenreStructure() {
 	$nav['name'][]	= 'Edit genre';
 	require_once('include/header.inc.php');
 ?>
-<form action="genre.php" method="post" id="genreform">
+<form action="genre.php" method="post">
 	<input type="hidden" name="action" value="saveGenreStructure">
 	<input type="hidden" name="genre_id" value="<?php echo $genre_id; ?>">
 	<input type="hidden" name="sign" value="<?php echo $cfg['sign']; ?>">
-<table>
+<table cellspacing="0" cellpadding="1">
 <tr>
 	<td>Name:</td>
 	<td class="textspace"></td>
@@ -318,8 +325,10 @@ function editGenreStructure() {
 	genreTree('', $genre_id_array, $genre_array);
 	foreach ($genre_array as $key => $genre) {
 		$new_genre_id = $genre_id_array[$key];
+		$lenght = strlen($new_genre_id);
+		$tab = str_repeat('&nbsp;', $lenght * 4);
 		if ($genre_id != substr($new_genre_id, 0, strlen($genre_id))) { ?>
-		<option value="<?php echo $new_genre_id ; ?>"<?php if ($new_genre_id == substr($genre_id, 0, -1)) echo ' selected'; ?>><?php echo str_repeat('&nbsp;', strlen($new_genre_id) * 2) . html($genre); ?></option>
+		<option value="<?php echo $new_genre_id ; ?>"<?php if ($new_genre_id == substr($genre_id, 0, -1)) echo ' selected'; ?>><?php echo $tab . html($genre); ?></option>
 <?php
 		}
 	} ?>
@@ -330,8 +339,8 @@ function editGenreStructure() {
 <tr>
 	<td colspan="2"></td>
 	<td>
-		<a href="javascript:genreform.submit();" class="button space">save</a><!--
-		--><a href="genre.php?action=genreStructure" class="button">cancel</a>
+		<input type="image" src="<?php echo $cfg['img']; ?>button_save.png" class="space">
+		<a href="genre.php?action=genreStructure" class="align"><img src="<?php echo $cfg['img']; ?>button_cancel.png" alt="" class="align"></a>
 	</td>
 </tr>
 </table>
@@ -350,9 +359,9 @@ function saveGenreStructure() {
 	global $cfg, $db;
 	authenticate('access_admin', false, true);
 	
-	$genre			= @$_POST['genre'];
-	$genre_id		= @$_POST['genre_id'];
-	$new_genre_id	= @$_POST['new_genre_id'];
+	$genre			= post('genre');
+	$genre_id		= post('genre_id');
+	$new_genre_id	= post('new_genre_id');
 	
 	
 	if (preg_match('#[^a-z]#', $genre_id))
@@ -369,25 +378,25 @@ function saveGenreStructure() {
 	
 	
 	if ($new_genre_id == substr($genre_id, 0, -1)) {
-		mysqli_query($db, 'UPDATE genre
-			SET genre		= "' . mysqli_real_escape_string($db, $genre) . '"
-			WHERE genre_id	= "' . mysqli_real_escape_string($db, $genre_id) . '"');
+		mysql_query('UPDATE genre
+			SET genre		= "' . mysql_real_escape_string($genre) . '"
+			WHERE genre_id	= "' . mysql_real_escape_string($genre_id) . '"');
 	}
 	else {
 		// Loop trough source genre's
-		$query1 = mysqli_query($db, 'SELECT genre, genre_id
+		$query1 = mysql_query('SELECT genre, genre_id
 			FROM genre
-			WHERE genre_id LIKE "' . mysqli_real_escape_like($db, $genre_id) . '%"
+			WHERE genre_id LIKE "' . mysql_real_escape_like($genre_id) . '%"
 			ORDER BY genre_id');
-		while ($result1 = mysqli_fetch_assoc($query1)) {
+		while ($result1 = mysql_fetch_assoc($query1)) {
 			if ($genre_id == $result1['genre_id']) {
 				// Get first available target genre
 				$previous_ord = ord('a') - 1;
-				$query2 = mysqli_query($db, 'SELECT genre_id
+				$query2 = mysql_query('SELECT genre_id
 					FROM genre
-					WHERE genre_id LIKE "' . mysqli_real_escape_like($db, $new_genre_id) . '_"
+					WHERE genre_id LIKE "' . mysql_real_escape_like($new_genre_id) . '_"
 					ORDER BY genre_id');
-				while ($result2 = mysqli_fetch_assoc($query2)) {
+				while ($result2 = mysql_fetch_assoc($query2)) {
 					if (ord(substr($result2['genre_id'], -1)) - $previous_ord > 1)
 						break;
 					$previous_ord = ord(substr($result2['genre_id'], -1));
@@ -404,14 +413,14 @@ function saveGenreStructure() {
 				$new_genre_id	= $new_root_id . substr($old_genre_id, strlen($genre_id));
 			}
 			
-			mysqli_query($db, 'UPDATE album
-				SET genre_id = "' . mysqli_real_escape_string($db, $new_genre_id) . '"
-				WHERE genre_id = "' . mysqli_real_escape_string($db, $old_genre_id) . '"');
+			mysql_query('UPDATE album
+				SET genre_id = "' . mysql_real_escape_string($new_genre_id) . '"
+				WHERE genre_id = "' . mysql_real_escape_string($old_genre_id) . '"');
 			
-			mysqli_query($db, 'UPDATE genre
-				SET genre_id	= "' . mysqli_real_escape_string($db, $new_genre_id) . '",
-				genre			= "' . mysqli_real_escape_string($db, $genre) . '"
-				WHERE genre_id	= "' . mysqli_real_escape_string($db, $old_genre_id) . '"');
+			mysql_query('UPDATE genre
+				SET genre_id	= "' . mysql_real_escape_string($new_genre_id) . '",
+				genre			= "' . mysql_real_escape_string($genre) . '"
+				WHERE genre_id	= "' . mysql_real_escape_string($old_genre_id) . '"');
 		}
 	}
 }
@@ -427,7 +436,7 @@ function addGenre()
 	global $cfg, $db;
 	authenticate('access_admin');
 	
-	// Navigator
+	// formattedNavigator
 	$nav			= array();
 	$nav['name'][]	= 'Configuration';
 	$nav['url'][]	= 'config.php';
@@ -436,10 +445,10 @@ function addGenre()
 	$nav['name'][]	= 'Add genre';
 	require_once('include/header.inc.php');
 ?>
-<form action="genre.php" method="post" id="genreform">
+<form action="genre.php" method="post">
 	<input type="hidden" name="action" value="saveAddGenre">
 	<input type="hidden" name="sign" value="<?php echo $cfg['sign']; ?>">
-<table>
+<table cellspacing="0" cellpadding="1">
 <tr>
 	<td>Name:</td>
 	<td class="textspace"></td>
@@ -454,8 +463,10 @@ function addGenre()
 <?php
 	genreTree('', $genre_id_array, $genre_array);
 	foreach ($genre_array as $key => $genre) {
-		$genre_id = $genre_id_array[$key]; ?>
-	<option value="<?php echo $genre_id ; ?>"><?php echo str_repeat('&nbsp;', strlen($genre_id) * 2) . html($genre); ?></option>
+		$genre_id = $genre_id_array[$key];
+		$lenght = strlen($genre_id);
+		$tab = str_repeat('&nbsp;', $lenght * 4); ?>
+	<option value="<?php echo $genre_id ; ?>"><?php echo $tab . html($genre); ?></option>
 <?php
 	} ?>
 </select>
@@ -465,8 +476,8 @@ function addGenre()
 <tr>
 	<td colspan="2"></td>
 	<td>
-		<a href="javascript:genreform.submit();" class="button space">save</a><!--
-		--><a href="genre.php?action=genreStructure" class="button">cancel</a>
+		<input type="image" src="<?php echo $cfg['img']; ?>button_save.png" class="space">
+		<a href="genre.php?action=genreStructure" class="align"><img src="<?php echo $cfg['img']; ?>button_cancel.png" alt="" class="align"></a>
 	</td>
 </tr>
 </table>
@@ -485,8 +496,8 @@ function saveAddGenre() {
 	global $cfg, $db;
 	authenticate('access_admin', false, true);
 	
-	$genre		= @$_POST['genre'];
-	$genre_id 	= @$_POST['genre_id'];
+	$genre		= post('genre');
+	$genre_id 	= post('genre_id');
 	
 	if (preg_match('#[^a-z]#', $genre_id))
 		message(__FILE__, __LINE__, 'error', '[b]This is not a valid genre_id:[/b][br]' . $genre_id);
@@ -495,12 +506,12 @@ function saveAddGenre() {
 		message(__FILE__, __LINE__, 'warning', '[b]Genre name to short[/b][br][url=genre.php?action=addGenre][img]small_back.png[/img]Back to previous page[/url]');
 	
 	$previous_ord = ord('a') - 1;
-	$query = mysqli_query($db, 'SELECT genre, genre_id
+	$query = mysql_query('SELECT genre, genre_id
 		FROM genre
-		WHERE genre_id LIKE "' . mysqli_real_escape_like($db, $genre_id) . '_"
+		WHERE genre_id LIKE "' . mysql_real_escape_like($genre_id) . '_"
 		ORDER BY genre_id');
 	
-	while ($result = mysqli_fetch_assoc($query)) {
+	while ($result = mysql_fetch_assoc($query)) {
 		if (ord(substr($result['genre_id'], -1)) - $previous_ord > 1)
 			break;
 		$previous_ord = ord(substr($result['genre_id'], -1));
@@ -510,9 +521,9 @@ function saveAddGenre() {
 		message(__FILE__, __LINE__, 'error', '[b]Maximum 26 genre\'s per level[/b][br][url=genre.php?action=addGenre][img]small_back.png[/img]Back to previous page[/url]');
 	$genre_id = $genre_id . chr($previous_ord + 1);
 	
-	mysqli_query($db, 'INSERT INTO genre (genre, genre_id)
-		VALUES ("' . mysqli_real_escape_string($db, $genre) . '",
-		"' . mysqli_real_escape_string($db, $genre_id) . '")');
+	mysql_query('INSERT INTO genre (genre, genre_id)
+		VALUES ("' . mysql_real_escape_string($genre) . '",
+		"' . mysql_real_escape_string($genre_id) . '")');
 }
 
 
@@ -525,15 +536,15 @@ function deleteGenre() {
 	global $cfg, $db;
 	authenticate('access_admin', false, true);
 	
-	$genre_id = @$_GET['genre_id'];
+	$genre_id = get('genre_id');
 	
 	$target_genre_id = substr($genre_id, 0, -1);
-	mysqli_query($db, 'UPDATE album
-		SET genre_id = "' . mysqli_real_escape_string($db, $target_genre_id) . '"
-		WHERE genre_id LIKE "' . mysqli_real_escape_like($db, $genre_id) . '%"');
+	mysql_query('UPDATE album
+		SET genre_id = "' . mysql_real_escape_string($target_genre_id) . '"
+		WHERE genre_id LIKE "' . mysql_real_escape_like($genre_id) . '%"');
 	
-	mysqli_query($db, 'DELETE FROM genre 
-		WHERE genre_id LIKE "' . mysqli_real_escape_like($db, $genre_id) . '%"');
+	mysql_query('DELETE FROM genre 
+		WHERE genre_id LIKE "' . mysql_real_escape_like($genre_id) . '%"');
 }
 
 
@@ -556,45 +567,72 @@ function blacklist() {
 	
 	require_once('include/header.inc.php');
 ?>
-<form action="genre.php" method="post" id="genreform">
+<form id="frmBlacklist" action="genre.php" method="post">
 	<input type="hidden" name="action" value="saveBlacklist">
 	<input type="hidden" name="sign" value="<?php echo $cfg['sign']; ?>">
-<table class="bottom_space"><tr><td><!-- table tab wrapper -->
-<ul id="tab">
-	<li id="albumartist" class="tab off" onclick="location.href='index.php?action=viewRandomAlbum';">Album</li>
-	<li id="trackartist" class="tab off" onclick="location.href='index.php?action=viewRandomTrack';">Track</li>
-	<li id="tracktitle" class="tab on" onclick="location.href='genre.php?action=blacklist';">Blacklist</li>
-</ul>
-<table class="tab">
+<table cellspacing="0" cellpadding="0" style="width: 100%;">
+<tr>
+	<td>
+<!--  -->
+<table cellspacing="0" cellpadding="0" class="tab">
+<tr>
+	<td class="tab_none tabspace"></td>
+	<td class="tab_off" onClick="location.href='index.php?action=viewRandomAlbum';">Album</td>
+	<td class="tab_none tabspace"></td>
+	<td class="tab_off" onClick="location.href='index.php?action=viewRandomTrack';">Track</td>
+	<td class="tab_none tabspace"></td>
+	<td class="tab_on" onClick="location.href='genre.php?action=blacklist';">Blacklist</td>
+	<td class="tab_none">&nbsp;</td>
+</tr>
+</table>
+<table width="100%" cellspacing="0" cellpadding="0" class="tab_border">
 <?php
 	$genre_id_array = array();
 	$genre_array 	= array();
 	genreTree('', $genre_id_array, $genre_array);
 	$i=0; ?>
-<tr class="header">
+<tr class="tab_header">
 	<td class="space"></td>
 	<td></td>
 	<td class="space"></td>
 </tr>
+<tr class="line"><td colspan="3"></td></tr>
+
+<tr class="lh3">
+	<td></td>
+	<td>
+	<div id="genreList">
 <?php
 	foreach ($genre_array as $key => $genre) {
 		$genre_id = $genre_id_array[$key];
-?>
-<tr class="<?php echo ($i & 1) ? 'even mouseover' : 'odd mouseover'; $i++ ?>">
-	<td></td>
-	<td><label style="margin-left: <?php echo (strlen($genre_id) -1) * 10; ?>px;"><input type="checkbox" name="genre_id_array[]" value="<?php echo $genre_id; ?>"<?php echo (in_array($genre_id, $blacklist)) ? ' checked' : ''; ?> class="space"><?php echo html($genre); ?></label></td>
-	<td></td>
-</tr>
+		// $lenght = strlen($genre_id) - 1;
+		// $tab = str_repeat('&nbsp;', $lenght * 4); 
+?>	<p>
+	<?php echo $tab; ?><input type="checkbox" name="genre_id_array[]" value="<?php echo $genre_id; ?>"<?php echo (in_array($genre_id, $blacklist)) ? ' checked' : ''; ?>>&nbsp;<?php echo html($genre); ?></input>
 <?php
 	}
 ?>
+	</div>
+	</td>
+	<td></td>
+</tr>
+
 </table>
-</td></tr></table><!-- table tab wrapper -->
-<a href="javascript:genreform.submit();" class="button">save</a>
+<!--  -->
+	</td>
+</tr>
+</table>
+<br>
+<div class="buttons">
+	<span>
+	<a href="#" onclick="$(frmBlacklist).submit();">Save</a>
+	</span>
+</div>
 </form>
 <?php
 	require_once('include/footer.inc.php');
 }
+
 
 
 
@@ -605,13 +643,14 @@ function saveBlacklist() {
 	global $cfg, $db;
 	authenticate('access_media', false, true, true);
 	
-	$genre_id_array = @$_POST['genre_id_array'];
+	$genre_id_array = post('genre_id_array');
 	$blacklist = implode(',', $genre_id_array);
 	
-	if (preg_match('#^[a-z,]*$#', $blacklist) == false)
-		message(__FILE__, __LINE__, 'error', '[b]This is not a valid genre[/b]');
+	//if (preg_match('#^[a-z,]*$#', $blacklist) == false)
+	//	message(__FILE__, __LINE__, 'error', '[b]This is not a valid genre[/b]');
 	
-	mysqli_query($db, 'UPDATE session
-		SET random_blacklist	= "' . mysqli_real_escape_string($db, $blacklist) . '"
-		WHERE sid				= BINARY "' . mysqli_real_escape_string($db, $cfg['sid']) . '"');
+	mysql_query('UPDATE session
+		SET random_blacklist	= "' . mysql_real_escape_string($blacklist) . '"
+		WHERE sid				= BINARY "' . mysql_real_escape_string($cfg['sid']) . '"');
 }
+?>

@@ -1,6 +1,6 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -20,29 +20,32 @@
 //  +------------------------------------------------------------------------+
 
 
-
+//error_reporting(-1);
+//ini_set('display_errors', 'On');
 
 //  +------------------------------------------------------------------------+
 //  | message.php                                                            |
 //  +------------------------------------------------------------------------+
 require_once('include/initialize.inc.php');
+if (strpos($_SERVER['HTTP_REFERER'],'playlist.php') !== 0) require_once('include/mysql.inc.php');
+
 header('Expires: Mon, 9 Oct 2000 18:00:00 GMT');
 header('Cache-Control: no-store, no-cache, must-revalidate');
-
-$message					= @$_GET['message'];
-$type						= @$_GET['type'];
-$skin						= @$_GET['skin'];
-$file						= @$_GET['file'];
-$line						= @$_GET['line'];
-$timestamp					= @$_GET['timestamp'];
-$cfg['menu']				= @$_GET['menu'];							// required for header
-$cfg['username']			= @$_GET['username'];						// required for footer
-$cfg['sign']				= rawurlencode(@$_GET['sign']);				// required for header
+$message					= get('message');
+$type						= get('type');
+$file						= get('file');
+$line						= get('line');
+$skin						= get('skin');
+$timestamp					= get('timestamp');
+$cfg['align']		 		= true;										// required for header
+$cfg['menu']				= get('menu');								// required for header
+$cfg['username']			= get('username');							// required for footer
+$cfg['sign']				= rawurlencode(get('sign'));				// required for header
 $cfg['img']					= 'skin/' . rawurlencode($skin) . '/img/';	// required for header
 $cfg['skin']				= $skin;									// required for header
 
 if (validateSkin($skin) == false)
-	exit('<!doctype html><html><head><title></title></head><body><h1>Wrong value</h1><p>Unsupported input value for <em>skin</em></p></body></html>');
+	exit('<h1>Wrong value</h1><p>Unsupported input value for <i>skin</i></p>');
 
 if (in_array($type, array('ok', 'warning', 'error')) == false)
 	$type = 'warning';
@@ -50,24 +53,42 @@ if (in_array($type, array('ok', 'warning', 'error')) == false)
 if (in_array($cfg['menu'], array('favorite', 'playlist', 'config')) == false)
 	$cfg['menu'] = 'media';
 
-$message = bbcode($message);
-
-if ($cfg['debug']) {
-	$message .= "\n";
-	$message .= "\t" . '<div class="debug">' . "\n";
-	$message .= "\t\t" . '<strong>time stamp:</strong> ' . html(date('r', hexdec($timestamp))) . '<br>' . "\n";
-	$message .= "\t\t" . '<strong>file:</strong> ' . html($file) . '<br>' . "\n";
-	$message .= "\t\t" . '<strong>line:</strong> ' . (int) $line . "\n";
-	$message .= "\t" . '</div>' . "\n";
+if (time() - hexdec($timestamp) > 2) {
+	$expired = bbcode($message);
+	$message = '<strong>Message has expired</strong><br><div id="show" style="display: block;"><a href="javascript:showHide(\'show\', \'hide\');"><img src="' . $cfg['img'] . 'small_show.png" alt="" class="small space">Message</a></div>';
+	$message .= '<div id="hide" style="display: none;"><a href="javascript:showHide(\'show\', \'hide\');"><img src="' . $cfg['img'] . 'small_hide.png" alt="" class="small space">Message</a><br>' . $expired . '</div>';
 }
+else
+	$message = bbcode($message);
 
 require_once('include/header.inc.php');
-?>
-<table class="<?php echo $type; ?>">
+if ($cfg['debug']) { ?>
+<table cellspacing="10" cellpadding="0" class="<?php echo $type; ?>">
 <tr>
-	<td><img src="<?php echo $cfg['img']; ?>medium_message_<?php echo $type; ?>.png" alt=""></td>
-	<td><?php echo $message ?></td>
+	<td rowspan="3" valign="top"><img src="<?php echo $cfg['img']; ?>medium_message_<?php echo $type; ?>.png" alt=""></td>
+	<td><?php echo $message; ?></td>
+</tr>
+<tr class="line"><td></td></tr>
+<!--
+<tr>
+	<td>
+	<strong>file:</strong> <?php echo html($file); ?><br>
+	<strong>line:</strong> <?php echo (int) $line; ?>
+	</td>
+</tr>
+-->
+</table>
+<?php
+}
+else {
+?>
+<table cellspacing="10" cellpadding="0" class="<?php echo $type; ?>">
+<tr>
+	<td valign="top"><img src="<?php echo $cfg['img']; ?>medium_message_<?php echo $type; ?>.png" alt=""></td>
+	<td valign="top"><?php echo $message ?></td>
 </tr>
 </table>
 <?php
+}
 require_once('include/footer.inc.php');
+?>

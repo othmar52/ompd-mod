@@ -1,6 +1,6 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -40,31 +40,23 @@
 //  +------------------------------------------------------------------------+
 require_once('include/initialize.inc.php');
 require_once('include/stream.inc.php');
-
-
-authenticateStream(true);
-
-
-$action		= @$_GET['action'];
-$album_id	= @$_GET['album_id'];
-
-
-if	($action != 'downloadCover')
-	message(__FILE__, __LINE__, 'error', '[b]Unsupported input value for[/b][br]action');
+authenticate('access_cover', true);
 
 if (function_exists('pdf_new') == false)
 	message(__FILE__, __LINE__, 'error', '[b]PDFlib not loaded[/b][list][*]Compile PHP with PDFlib support.[*]Or use a loadable module in the php.ini[/list]');
 
-$query	= mysqli_query($db, 'SELECT artist, album FROM album WHERE album_id = "' . mysqli_real_escape_string($db, $album_id) . '"');
-$album	= mysqli_fetch_assoc($query);
+$album_id = get('album_id');
+
+$query	= mysql_query('SELECT artist, album FROM album WHERE album_id = "' . mysql_real_escape_string($album_id) . '"');
+$album	= mysql_fetch_assoc($query);
 
 if ($album == false)
 	message(__FILE__, __LINE__, 'error', '[b]Error[/b][br]album_id not found in database');
 
-$query	= mysqli_query($db, 'SELECT image_front, image_back, image_front_width * image_front_height AS front_resolution, album_id
+$query	= mysql_query('SELECT image_front, image_back, image_front_width * image_front_height AS front_resolution, album_id
 	FROM bitmap
-	WHERE album_id = "' . mysqli_real_escape_string($db, $album_id) . '"');
-$bitmap	= mysqli_fetch_assoc($query);
+	WHERE album_id = "' . mysql_real_escape_string($album_id) . '"');
+$bitmap	= mysql_fetch_assoc($query);
 
 
 
@@ -141,14 +133,14 @@ if ($bitmap['image_back']) {
 }
 else {
 	$same_artist = false;
-	$query = mysqli_query($db, 'SELECT artist FROM track WHERE album_id = "' . mysqli_real_escape_string($db, $album_id) . '" GROUP BY artist');
-	if (mysqli_num_rows($query) == 1) 
+	$query = mysql_query('SELECT artist FROM track WHERE album_id = "' . mysql_real_escape_string($album_id) . '" GROUP BY artist');
+	if (mysql_num_rows($query) == 1) 
 		$same_artist = true;
 	
 	$text = '';
 	$previous_disc = 1;
-	$query = mysqli_query($db, 'SELECT title, artist, disc FROM track WHERE album_id = "' . mysqli_real_escape_string($db, $album_id) . '" ORDER BY relative_file');
-	while ($track = mysqli_fetch_assoc($query)) {
+	$query = mysql_query('SELECT title, artist, disc FROM track WHERE album_id = "' . mysql_real_escape_string($album_id) . '" ORDER BY relative_file');
+	while ($track = mysql_fetch_assoc($query)) {
 		if ($previous_disc != $track['disc'])	$text .= "\n";
 		if ($same_artist) 						$text .= $track['title'] . "\n";
 		else 									$text .= $track['artist'] . ' - ' . $track['title'] . "\n";
@@ -158,8 +150,8 @@ else {
 	pdf_setfont($pdf, $font, 3);
 	pdf_show_boxed($pdf, $text, 6.5, 0, 138, 108, 'center', '');
 	
-	$query = mysqli_query($db, 'SELECT artist, album FROM album WHERE album_id = "' . mysqli_real_escape_string($db, $album_id) . '"');
-	$album = mysqli_fetch_assoc($query);
+	$query = mysql_query('SELECT artist, album FROM album WHERE album_id = "' . mysql_real_escape_string($album_id) . '"');
+	$album = mysql_fetch_assoc($query);
 	
 	if (in_array(strtolower($album['artist']), $cfg['no_album_artist']))	$title = $album['album'];
 	else																	$title = $album['artist'] . ' - ' . $album['album'];
@@ -233,3 +225,4 @@ $etag = '"' . md5($hash_data) . '"';
 
 streamData($data, 'application/pdf', 'inline', $filename, $etag);
 updateCounter($album_id, NJB_COUNTER_COVER);
+?>

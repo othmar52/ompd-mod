@@ -1,6 +1,6 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -37,26 +37,26 @@ function cacheUpdateFile($id, $profile, $file, $tag_hash = '', $zip_hash = '') {
 	
 	clearstatcache();
 	
-	mysqli_query($db, 'UPDATE cache SET
+	mysql_query('UPDATE cache SET
 		idle_time			= ' . (int) time() . ',
 		filesize			= ' . (int) filesize($file) . ',
 		filemtime			= ' . (int) filemtime($file) . ',
-		tag_hash			= "' . mysqli_real_escape_string($db, $tag_hash) . '",
-		zip_hash			= "' . mysqli_real_escape_string($db, $zip_hash) . '",
-		relative_file		= "' . mysqli_real_escape_string($db, $relative_file) . '"
-		WHERE id			= "' . mysqli_real_escape_string($db, $id) . '"
+		tag_hash			= "' . mysql_real_escape_string($tag_hash) . '",
+		zip_hash			= "' . mysql_real_escape_string($zip_hash) . '",
+		relative_file		= "' . mysql_real_escape_string($relative_file) . '"
+		WHERE id			= "' . mysql_real_escape_string($id) . '"
 		AND profile			= ' . (int) $profile);
-	if (mysqli_affected_rows($db) == 0)
-		mysqli_query($db, 'INSERT INTO cache (id, profile, create_time, idle_time, filesize, filemtime, tag_hash, zip_hash, relative_file) VALUES (
-			"' . mysqli_real_escape_string($db, $id) . '",
+	if (mysql_affected_rows($db) == 0)
+		mysql_query('INSERT INTO cache (id, profile, create_time, idle_time, filesize, filemtime, tag_hash, zip_hash, relative_file) VALUES (
+			"' . mysql_real_escape_string($id) . '",
 			' . (int) $profile . ',
 			' . (int) time() . ',
 			' . (int) time() . ',
 			' . (int) filesize($file) . ',
 			' . (int) filemtime($file) . ',
-			"' . mysqli_real_escape_string($db, $tag_hash) . '",
-			"' . mysqli_real_escape_string($db, $zip_hash) . '",
-			"' . mysqli_real_escape_string($db, $relative_file) . '")');
+			"' . mysql_real_escape_string($tag_hash) . '",
+			"' . mysql_real_escape_string($zip_hash) . '",
+			"' . mysql_real_escape_string($relative_file) . '")');
 }
 
 
@@ -68,25 +68,25 @@ function cacheUpdateFile($id, $profile, $file, $tag_hash = '', $zip_hash = '') {
 function cacheUpdateTag($track_id, $profile, $file) {
 	global $cfg, $db;
 	
-	$query  = mysqli_query($db, 'SELECT image, bitmap.flag
+	$query  = mysql_query('SELECT image, bitmap.flag
 		FROM bitmap, track
 		WHERE bitmap.album_id = track.album_id
-		AND track_id = "' . mysqli_real_escape_string($db, $track_id) . '"');
-	$bitmap = mysqli_fetch_assoc($query);
+		AND track_id = "' . mysql_real_escape_string($track_id) . '"');
+	$bitmap = mysql_fetch_assoc($query);
 	
-	$query = mysqli_query($db, 'SELECT
+	$query = mysql_query('SELECT
 		LOWER(SUBSTRING_INDEX(relative_file, ".", -1)) AS extension,
 		track.artist, title, album, year, disc, discs, number, audio_lossless
 		FROM track, album
-		WHERE track_id = "' . mysqli_real_escape_string($db, $track_id) . '" 
+		WHERE track_id = "' . mysql_real_escape_string($track_id) . '" 
 		AND track.album_id = album.album_id');
-	$track = mysqli_fetch_assoc($query);
+	$track = mysql_fetch_assoc($query);
 	
-	$query = mysqli_query($db, 'SELECT tag_hash
+	$query = mysql_query('SELECT tag_hash
 		FROM cache
-		WHERE id		= "' . mysqli_real_escape_string($db, $track_id) . '"
+		WHERE id		= "' . mysql_real_escape_string($track_id) . '"
 		AND profile		= ' . (int) $profile);
-	$cache = mysqli_fetch_assoc($query);
+	$cache = mysql_fetch_assoc($query);
 		
 	// populate data array
 	$tagData['title'][0]		= iconv(NJB_DEFAULT_CHARSET, $cfg['tag_encoding'][$profile], $track['title']);
@@ -157,23 +157,23 @@ function cacheGetFile($id, $profile) {
 	$zip_hash = '';
 	if (strpos($id, '_') === false) {
 		$hash_data = '';
-		$query = mysqli_query($db, 'SELECT relative_file
+		$query = mysql_query('SELECT relative_file
 			FROM track
-			WHERE album_id	= "' . mysqli_real_escape_string($db, $id) . '"
+			WHERE album_id	= "' . mysql_real_escape_string($id) . '"
 			ORDER BY relative_file');
-		while($track = mysqli_fetch_assoc($query)) {
+		while($track = mysql_fetch_assoc($query)) {
 			$pathinfo	= pathinfo($track['relative_file']);
 			$hash_data	.= downloadFilename($pathinfo['filename'], true, true);
 		}
 		$zip_hash = md5($hash_data);	
 	}
 	
-	$query = mysqli_query($db, 'SELECT create_time, filesize, filemtime, relative_file
+	$query = mysql_query('SELECT create_time, filesize, filemtime, relative_file
 		FROM cache
-		WHERE id		= "' . mysqli_real_escape_string($db, $id) . '"
-		AND zip_hash	= "' . mysqli_real_escape_string($db, $zip_hash) . '"
+		WHERE id		= "' . mysql_real_escape_string($id) . '"
+		AND zip_hash	= "' . mysql_real_escape_string($zip_hash) . '"
 		AND profile		= ' . (int) $profile);
-	$cache = mysqli_fetch_assoc($query);
+	$cache = mysql_fetch_assoc($query);
 	$relative_file = $cache['relative_file'];
 	$file = NJB_HOME_DIR . $cache['relative_file'];
 	
@@ -181,10 +181,10 @@ function cacheGetFile($id, $profile) {
 		// File exist and has not changed
 		if (strpos($id, '_') !== false && $profile >= 0) {
 			// Update cache filename, except for zip and wave files
-			$query = mysqli_query($db, 'SELECT relative_file
+			$query = mysql_query('SELECT relative_file
 				FROM track
-				WHERE track_id	= "' . mysqli_real_escape_string($db, $id) . '"');
-			$track = mysqli_fetch_assoc($query);
+				WHERE track_id	= "' . mysql_real_escape_string($id) . '"');
+			$track = mysql_fetch_assoc($query);
 			
 			$cache_pathinfo	= pathinfo($cache['relative_file']);
 			$track_pathinfo	= pathinfo($track['relative_file']);
@@ -195,10 +195,10 @@ function cacheGetFile($id, $profile) {
 				$file = NJB_HOME_DIR . $relative_file;
 			}
 		}
-		mysqli_query($db, 'UPDATE cache
+		mysql_query('UPDATE cache
 			SET idle_time	= ' . (int) time() . ',
-			relative_file	= "' . mysqli_real_escape_string($db, $relative_file) . '"
-			WHERE id		= "' . mysqli_real_escape_string($db, $id) . '"
+			relative_file	= "' . mysql_real_escape_string($relative_file) . '"
+			WHERE id		= "' . mysql_real_escape_string($id) . '"
 			AND  profile	= ' . (int) $profile);
 		return $file;
 	}
@@ -207,9 +207,9 @@ function cacheGetFile($id, $profile) {
 		if (@unlink($file) == false)
 			message(__FILE__, __LINE__, 'error', '[b]Failed to delete file:[/b][br]' . $file);
 		
-		mysqli_query($db, 'DELETE
+		mysql_query('DELETE
 			FROM cache
-			WHERE id 		= "' . mysqli_real_escape_string($db, $id) . '"
+			WHERE id 		= "' . mysql_real_escape_string($id) . '"
 			AND  profile	= ' . (int) $profile);
 		return false;
 	}
@@ -231,11 +231,11 @@ function cacheGetDir($id, $profile) {
 	if (strpos($id, '_'))
 		$id = substr($id, 0, strpos($id, '_'));
 	
-	$query = mysqli_query($db, 'SELECT relative_file
+	$query = mysql_query('SELECT relative_file
 		FROM cache
 		WHERE profile 					= ' . (int) $profile . '
-		AND SUBSTRING_INDEX(id, "_", 1)	= "' . mysqli_real_escape_string($db, $id) . '"');
-	$cache = mysqli_fetch_assoc($query);
+		AND SUBSTRING_INDEX(id, "_", 1)	= "' . mysql_real_escape_string($id) . '"');
+	$cache = mysql_fetch_assoc($query);
 	
 	$relative_dir	= substr($cache['relative_file'], 0, strrpos($cache['relative_file'], '/')) . '/';
 	$dir			= NJB_HOME_DIR . $relative_dir;
@@ -250,7 +250,7 @@ function cacheGetDir($id, $profile) {
 		return $dir;
 	}
 	else {
-		$random = randomFileSid();
+		$random = randomHex();
 		$relative_dir = 'cache/' . substr($random, 0, 1) . '/' . substr($random, 1, 1) . '/' . $random . '/';
 		$dir = NJB_HOME_DIR . $relative_dir;
 		
@@ -258,12 +258,12 @@ function cacheGetDir($id, $profile) {
 		if (@mkdir($dir, 0777) == false)
 			message(__FILE__, __LINE__, 'error', '[b]Failed to create directory:[/b][br]' . $dir);
 		
-		mysqli_query($db, 'INSERT INTO cache (id, profile, create_time, idle_time, relative_file) VALUES (
-			"' . mysqli_real_escape_string($db, $id) . '_pinpoint",
+		mysql_query('INSERT INTO cache (id, profile, create_time, idle_time, relative_file) VALUES (
+			"' . mysql_real_escape_string($id) . '_pinpoint",
 			' . (int) $profile . ',
 			' . (int) time() . ',
 			' . (int) time() . ',
-			"' . mysqli_real_escape_string($db, $relative_dir) . 'dummy.pinpoint")');
+			"' . mysql_real_escape_string($relative_dir) . 'dummy.pinpoint")');
 		return $dir;
 	}
 }
@@ -295,26 +295,26 @@ function cacheCreateRoot() {
 function cacheDeleteAlbum($album_id) {
 	global $cfg, $db;
 	
-	$query = mysqli_query($db, 'SELECT album_id
+	$query = mysql_query('SELECT album_id
 		FROM album
-		WHERE album_id = "' . mysqli_real_escape_string($db, $album_id) . '"');
-	$album = mysqli_fetch_assoc($query);
+		WHERE album_id = "' . mysql_real_escape_string($album_id) . '"');
+	$album = mysql_fetch_assoc($query);
 	
 	if ($album == false)
 		message(__FILE__, __LINE__, 'error', '[b]Error[/b][br]album_id not found in database');
 	
-	$query = mysqli_query($db, 'SELECT relative_file
+	$query = mysql_query('SELECT relative_file
 		FROM cache
-		WHERE SUBSTRING_INDEX(id, "_", 1) = "' . mysqli_real_escape_string($db, $album_id) . '"');
+		WHERE SUBSTRING_INDEX(id, "_", 1) = "' . mysql_real_escape_string($album_id) . '"');
 	
-	while ($cache = mysqli_fetch_assoc($query))	{
+	while ($cache = mysql_fetch_assoc($query))	{
 		$file = NJB_HOME_DIR . $cache['relative_file'];
 		
 		if (is_file($file) && @unlink($file) == false)
 			message(__FILE__, __LINE__, 'error', '[b]Failed to delete file:[/b][br]' . $file);
 		
-		mysqli_query($db, 'DELETE FROM cache
-			WHERE relative_file = "' . mysqli_real_escape_string($db, $cache['relative_file']) . '"');
+		mysql_query('DELETE FROM cache
+			WHERE relative_file = "' . mysql_real_escape_string($cache['relative_file']) . '"');
 	}
 
  }
@@ -329,113 +329,147 @@ function cacheCleanup() {
 	global $cfg, $db;
 	
 	// Delete unavailable files from cache
-	$query = mysqli_query($db, 'SELECT cache.relative_file
+	$query = mysql_query('SELECT cache.relative_file
 		FROM cache LEFT JOIN track
 		ON cache.id = track.track_id
 		WHERE track.track_id IS NULL
-		AND LOWER(SUBSTRING_INDEX(cache.relative_file, ".", -1)) != "' . mysqli_real_escape_string($db, $cfg['download_album_extension']) . '"');
+		AND LOWER(SUBSTRING_INDEX(cache.relative_file, ".", -1)) != "' . mysql_real_escape_string($cfg['download_album_extension']) . '"');
 	
-	while ($cache = mysqli_fetch_assoc($query)) {
+	while ($cache = mysql_fetch_assoc($query)) {
 		$file = NJB_HOME_DIR . $cache['relative_file'];
 		
 		if (is_file($file) && @unlink($file) == false)
 			message(__FILE__, __LINE__, 'error', '[b]Failed to delete file:[/b][br]' . $file);
 		
-		mysqli_query($db, 'DELETE FROM cache
-			WHERE relative_file = "' . mysqli_real_escape_string($db, $cache['relative_file']) . '"');
+		mysql_query('DELETE FROM cache
+			WHERE relative_file = "' . mysql_real_escape_string($cache['relative_file']) . '"');
 	}
 		
 	// Delete unavailable zip files from cache	
-	$query = mysqli_query($db, 'SELECT cache.relative_file
+	$query = mysql_query('SELECT cache.relative_file
 		FROM cache LEFT JOIN album
 		ON cache.id = album.album_id
 		WHERE album.album_id IS NULL
-		AND LOWER(SUBSTRING_INDEX(cache.relative_file, ".", -1)) = "' . mysqli_real_escape_string($db, $cfg['download_album_extension']) . '"');
+		AND LOWER(SUBSTRING_INDEX(cache.relative_file, ".", -1)) = "' . mysql_real_escape_string($cfg['download_album_extension']) . '"');
 	
-	while ($cache = mysqli_fetch_assoc($query))	{
+	while ($cache = mysql_fetch_assoc($query))	{
 		$file = NJB_HOME_DIR . $cache['relative_file'];
 		
 		if (is_file($file) && @unlink($file) == false)
 			message(__FILE__, __LINE__, 'error', '[b]Failed to delete file:[/b][br]' . $file);
 		
-		mysqli_query($db, 'DELETE FROM cache
-			WHERE relative_file = "' . mysqli_real_escape_string($db, $cache['relative_file']) . '"');
+		mysql_query('DELETE FROM cache
+			WHERE relative_file = "' . mysql_real_escape_string($cache['relative_file']) . '"');
 	}
 		
 	// Delete wav files after x hour idle time set by $cfg['cache_expire_wav']
-	$query = mysqli_query($db, 'SELECT relative_file
+	$query = mysql_query('SELECT relative_file
 		FROM cache
 		WHERE profile = -2
 		AND LOWER(SUBSTRING_INDEX(cache.relative_file, ".", -1)) = "wav"
 		AND idle_time < ' . (int) (time() - $cfg['cache_expire_wav']));
 	
-	while ($cfg['cache_expire_wav'] && $cache = mysqli_fetch_assoc($query)) {
+	while ($cfg['cache_expire_wav'] && $cache = mysql_fetch_assoc($query)) {
 		$file = NJB_HOME_DIR . $cache['relative_file'];
 		
 		if (is_file($file) && @unlink($file) == false)
 			message(__FILE__, __LINE__, 'error', '[b]Failed to delete file:[/b][br]' . $file);
 		
-		mysqli_query($db, 'DELETE FROM cache
-			WHERE relative_file = "' . mysqli_real_escape_string($db, $cache['relative_file']) . '"');
+		mysql_query('DELETE FROM cache
+			WHERE relative_file = "' . mysql_real_escape_string($cache['relative_file']) . '"');
 	}
 		
 	// Delete zip files after x hour idle time set by $cfg['cache_expire_zip']
-	$query = mysqli_query($db, 'SELECT relative_file, id
+	$query = mysql_query('SELECT relative_file, id
 		FROM cache
-		WHERE LOWER(SUBSTRING_INDEX(relative_file, ".", -1)) = "' . mysqli_real_escape_string($db, $cfg['download_album_extension']) . '"
+		WHERE LOWER(SUBSTRING_INDEX(relative_file, ".", -1)) = "' . mysql_real_escape_string($cfg['download_album_extension']) . '"
 		AND idle_time < ' . (int) (time() - $cfg['cache_expire_zip']));
 	
-	while ($cfg['cache_expire_zip'] && $cache = mysqli_fetch_assoc($query))	{
-		$query2 = mysqli_query($db, 'SELECT album_id
+	while ($cfg['cache_expire_zip'] && $cache = mysql_fetch_assoc($query))	{
+		$query2 = mysql_query('SELECT album_id
 			FROM share_download
-			WHERE album_id = "' . mysqli_real_escape_string($db, $cache['id']) . '"
+			WHERE album_id = "' . mysql_real_escape_string($cache['id']) . '"
 			AND expire_time > ' . (int) time() );
 		
-		if (mysqli_fetch_assoc($query2) == false) {
+		if (mysql_fetch_assoc($query2) == false) {
 			$file = NJB_HOME_DIR . $cache['relative_file'];
 			
 			if (is_file($file) && @unlink($file) == false)
 				message(__FILE__, __LINE__, 'error', '[b]Failed to delete file:[/b][br]' . $file);
 			
-			mysqli_query($db, 'DELETE FROM cache
-				WHERE relative_file = "' . mysqli_real_escape_string($db, $cache['relative_file']) . '"');
+			mysql_query('DELETE FROM cache
+				WHERE relative_file = "' . mysql_real_escape_string($cache['relative_file']) . '"');
 		}
+	}
+		
+	// Delete files from the cache when more than 95% of the total available space is used (ordered by idle time)
+	$cache_total_space = disk_total_space(NJB_HOME_DIR . 'cache/');
+	$cache_free_space = disk_free_space(NJB_HOME_DIR . 'cache/');
+	$cache_used_space = $cache_total_space - $cache_free_space;
+	
+	$query = mysql_query('SELECT relative_file, filesize
+		FROM cache
+		WHERE  cache.relative_file != "dummy.pinpoint"
+		ORDER BY idle_time');
+	
+	while ($cache_used_space > $cache_total_space * .95 && $cache = mysql_fetch_assoc($query)) {
+		$file = NJB_HOME_DIR . $cache['relative_file'];
+		
+		if (is_file($file) && @unlink($file) == false)
+			message(__FILE__, __LINE__, 'error', '[b]Failed to delete file:[/b][br]' . $file);
+		
+		mysql_query('DELETE FROM cache
+			WHERE relative_file = "' . mysql_real_escape_string($cache['relative_file']) . '"');
+		
+		$cache_free_space = disk_free_space(NJB_HOME_DIR . 'cache/');
+		$cache_used_space = $cache_total_space - $cache_free_space;
 	}
 }
 
 
 
 
-
+//  +------------------------------------------------------------------------+
+//  | Cache validate                                                         |
+//  +------------------------------------------------------------------------+
+function cacheValidate() {
+	global $cfg, $db;
+	cacheCreateRoot();
+	cacheCleanup();
+	
+	mysql_query('UPDATE cache SET updated = 0');
+	recursiveValidate(NJB_HOME_DIR . 'cache/');
+	mysql_query('DELETE FROM cache WHERE NOT updated');
+}
 
 
 
 
 //  +------------------------------------------------------------------------+
-//  | Cache recursive validate                                               |
+//  | Recursive validate                                                     |
 //  +------------------------------------------------------------------------+
-function cacheRecursiveValidate($dir) {
+function recursiveValidate($dir) {
 	global $cfg, $db;
 	
 	$entries = @scandir($dir) or message(__FILE__, __LINE__, 'error', '[b]Failed to open directory:[/b][br]' . $dir);
 	foreach ($entries as $entry) {
 		if (!in_array($entry, array('.', '..', 'index.php'))) {
 			if (is_dir($dir . $entry . '/')) {
-				cacheRecursiveValidate($dir . $entry . '/');
+				recursiveValidate($dir . $entry . '/');
 				if (strlen($entry) != 1)
 					@rmdir($dir . $entry . '/');
 			}
 			else {
 				$file = $dir . $entry;
 				$relative_file = substr($file, strlen(NJB_HOME_DIR));
-				$query = mysqli_query($db, 'SELECT filesize, filemtime FROM cache
-					WHERE relative_file = "' . mysqli_real_escape_string($db, $relative_file) . '"');
-				$cache = mysqli_fetch_assoc($query);
+				$query = mysql_query('SELECT filesize, filemtime FROM cache
+					WHERE relative_file = "' . mysql_real_escape_string($relative_file) . '"');
+				$cache = mysql_fetch_assoc($query);
 				
-				if (@filesize($file) == $cache['filesize'] && filemtimeCompare(@filemtime($file), $cache['filemtime'])) {
-					mysqli_query($db, 'UPDATE cache
+				if (filesize($file) == $cache['filesize'] && filemtimeCompare(filemtime($file), $cache['filemtime'])) {
+					mysql_query('UPDATE cache
 						SET updated			= 1
-						WHERE relative_file	= "' . mysqli_real_escape_string($db, $relative_file) . '"');
+						WHERE relative_file	= "' . mysql_real_escape_string($relative_file) . '"');
 				}
 				else {
 					@unlink($file);
@@ -447,3 +481,4 @@ function cacheRecursiveValidate($dir) {
 		}
 	}
 }
+?>

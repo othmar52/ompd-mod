@@ -1,6 +1,10 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | O!MPD, Copyright © 2015 Artur Sierzant		                         |
+//  | http://www.ompd.pl                                             		 |
+//  |                                                                        |
+//  |                                                                        |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -20,6 +24,315 @@
 //  +------------------------------------------------------------------------+
 
 
+//  +------------------------------------------------------------------------+
+//  | Tile for album cover and info                                          |
+//  +------------------------------------------------------------------------+
+function draw_tile($size,$album) {
+		echo '<a href="index.php?action=view3&amp;album_id=' . $album['album_id'] . '" class="tile" style="width: ' . $size . 'px; height: ' . $size . 'px;">';
+		echo '<img src="image.php?image_id=' . $album['image_id'] . '" alt="" width="100%" height="100%">';
+		//echo '	<div id="tile_title" class="tile_info">';
+		echo '	<div class="tile_info">';
+		echo '	<div class="tile_title">' . html($album['album']) . '</div>';
+		echo '	<div class="tile_band">' . html($album['artist_alphabetic']) . '</div>';
+		echo '	</div>';
+		echo '</a>';
+}
+
+function draw_tile_old($size,$album) {
+		echo '<a href="index.php?action=view3&amp;album_id=' . $album['album_id'] . '" class="tile">';
+		//echo '<div class="tile">';
+		echo '<div style="width: ' . $size . 'px; height: ' . $size . 'px;" class="tile">';
+		//echo '<div style="margin: auto; width: 100%; height: 100%;">';
+		//echo '<a href="index.php?action=view3&amp;album_id=' . $album['album_id'] . '" class="tile">';
+		
+		echo '<div><img src="image.php?image_id=' . $album['image_id'] . '" alt="" width="100%" height="100%" align="middle" class="tile1"></div>';
+		
+		//echo '	<div><img class="lazy tile1" data-original="image.php?image_id=' . $album['image_id'] . '" alt="" width="100px" height="100px" align="middle"></div>';
+		
+		//echo '</a>';
+		echo '	<div id="tile_title" class="tile_title">' . html($album['album']) ;
+		echo '	<span class="tile_band">' . html($album['artist_alphabetic']) . '</span>';
+		echo '	</div>';
+		//echo '</div>';
+		echo '</div>';
+		//echo '</div>';
+		echo '</a>';
+		}
+		//<img class="lazy" data-original="img/example.jpg" width="640" height="480">
+
+
+//  +---------------------------------------------------------------------------+
+//  | multiexplode by php at metehanarslan dot com                              |
+//  +---------------------------------------------------------------------------+
+
+function multiexplode ($delimiters,$string) {
+   
+    $ready = str_ireplace($delimiters, $delimiters[0], $string);
+    $launch = explode($delimiters[0], $ready);
+    return  $launch;
+}		
+		
+
+//  +---------------------------------------------------------------------------+
+//  | find core of track title						                            |
+//  +---------------------------------------------------------------------------+
+
+function findCoreTrackTitle($title) {
+	global $cfg;
+	$title = strtolower($title);
+	$separator = $cfg['separator'];
+	$count = count($separator);
+	$i=0;
+	
+	for ($i=0; $i<$count; $i++) {
+		$pos = strpos($title,strtolower($separator[$i]));
+		if ($pos !== false) {
+			$title = trim(substr($title, 0 , $pos));
+			//break;
+		}
+	}  
+	
+	return $title;
+
+}
+
+		
+		
+//  +------------------------------------------------------------------------+
+//  | onMouseOver download album                                             |
+//  +------------------------------------------------------------------------+
+function onmouseoverDownloadAlbum($album_id) {
+	global $cfg, $db;
+	
+	$filesize	= 0;
+	$transcode	= false;
+	$exact		= true;
+	$extensions	= array();
+	$query = mysql_query('SELECT track.filesize, cache.filesize AS cache_filesize,
+		miliseconds, audio_bitrate, track_id,
+		LOWER(SUBSTRING_INDEX(track.relative_file, ".", -1)) AS extension
+		FROM track LEFT JOIN cache
+		ON track.track_id = cache.id
+		AND cache.profile = ' . (int) $cfg['download_id'] . '
+		WHERE album_id = "' . mysql_real_escape_string($album_id) . '"');
+	if (mysql_num_rows($query) == 1) {
+		// By one track return onmouseoverDownloadTrack() info
+		$track = mysql_fetch_assoc($query);
+		return onmouseoverDownloadTrack($track['track_id']);
+	}
+	while($track = mysql_fetch_assoc($query)) {
+		if (in_array($track['extension'], $extensions) == false)
+			$extensions[] = $track['extension'];
+		$transcode_track = false;
+		if (sourceFile($track['extension'], $track['audio_bitrate'], $cfg['download_id']) == false) {
+			$transcode_track	= true;
+			$transcode			= true;
+		}
+		if ($track['cache_filesize'])
+			$filesize += $track['cache_filesize'];
+		elseif ($transcode_track) {
+			$filesize += round($cfg['encode_bitrate'][$cfg['download_id']] * $track['miliseconds'] / 8 / 1000);
+			$exact = false;
+		}
+		else
+			$filesize += $track['filesize'];
+	}
+	
+	sort($extensions);
+	$source = implode($extensions, ', ');
+	
+	if ($exact)	$list = formattedSize($filesize);
+	else		$list = html_entity_decode('&plusmn; ', null, NJB_DEFAULT_CHARSET) . formattedSize($filesize);
+	
+	$list .= '<div class="ol_line"></div>';
+	if ($transcode && count($extensions) == 1)		$list .= $cfg['encode_name'][$cfg['download_id']] . ' (' . $source . ' source)';
+	elseif ($transcode && count($extensions) > 4)	$list .= $cfg['encode_name'][$cfg['download_id']] . ' (mixed source)';
+	elseif ($transcode)								$list .= $cfg['encode_name'][$cfg['download_id']] . '<br>(' . $source . ' source)';
+	else 											$list .= $source;
+	$list .= '<div class="ol_line"></div>';
+	
+	if ($transcode && $exact)		$list .= 'Transcoded:<img src="' . $cfg['img'] . 'tiny_check.png" alt="" class="tiny"><br>';
+	elseif ($transcode && !$exact)	$list .= 'Transcoded:<img src="' . $cfg['img'] . 'tiny_uncheck.png" alt="" class="tiny"><br>';
+	else							$list .= 'Source:<img src="' . $cfg['img'] . 'tiny_check.png" alt="" class="tiny"><br>';
+	
+	return 'onMouseOver="return overlib(\'' . addslashes(html($list)) . '\', CAPTION, \'Download album:\', WIDTH, 200);" onMouseOut="return nd();"';
+}
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | onMouseOver download track                                             |
+//  +------------------------------------------------------------------------+
+function onmouseoverDownloadTrack($track_id) {
+	global $cfg, $db;
+	$query = mysql_query('SELECT
+		LOWER(SUBSTRING_INDEX(relative_file, ".", -1)) AS extension,
+		relative_file,
+		miliseconds,
+		filesize,
+		audio_bitrate, audio_dataformat, audio_encoder, audio_profile, audio_bits_per_sample, audio_sample_rate, audio_channels,
+		video_codec, video_resolution_x, video_resolution_y, video_framerate
+		FROM track
+		WHERE track_id = "' . mysql_real_escape_string($track_id) . '"');
+	$track = mysql_fetch_assoc($query);
+	
+	if (sourceFile($track['extension'], $track['audio_bitrate'], $cfg['download_id']))	$transcode = false;
+	else																				$transcode = true;
+	
+	$list = '';
+	if ($transcode) {
+		$query = mysql_query('SELECT filesize
+			FROM cache 
+			WHERE id		= "' . mysql_real_escape_string($track_id) . '"
+			AND  profile	= "' . mysql_real_escape_string($cfg['download_id']) . '"');
+		if ($cache = mysql_fetch_assoc($query)) {
+			$list .= formattedSize($cache['filesize']);
+			$list .= '<div class="ol_line"></div>';
+			$list .= $cfg['encode_name'][$cfg['download_id']];
+			$list .= ' (' . $track['extension'] . ' source)';
+			$list .= '<div class="ol_line"></div>';
+			$list .= 'Transcoded:<img src="' . $cfg['img'] . 'tiny_check.png" alt="" class="tiny">';
+		}
+		else {
+			$list .= html_entity_decode('&plusmn; ', null, NJB_DEFAULT_CHARSET) . formattedSize($cfg['encode_bitrate'][$cfg['download_id']] * $track['miliseconds'] / 8 / 1000);
+			$list .= '<div class="ol_line"></div>';
+			$list .= $cfg['encode_name'][$cfg['download_id']];
+			$list .= ' (' . $track['extension'] . ' source)';
+			$list .= '<div class="ol_line"></div>';
+			$list .= 'Transcoded:<img src="' . $cfg['img'] . 'tiny_uncheck.png" alt="" class="tiny">';
+		}
+	}
+	else {
+		$list .= formattedSize($track['filesize']);
+		$list .= '<div class="ol_line"></div>';
+	}
+	
+	if ($track['video_codec'] && $transcode == false) {
+		$list .= $track['video_codec'] . '<br>';
+		$list .= $track['video_resolution_x'] . 'x';
+		$list .= $track['video_resolution_y'] . '<br>';
+		$list .= $track['video_framerate'] . ' fps';
+	}
+	
+	if ($track['audio_dataformat'] && $transcode == false) {
+		if ($track['video_codec']) $list .= '<div class="ol_line"></div>';
+		$list .= $track['audio_dataformat'] . '<br>';
+		$list .= $track['audio_encoder'] . '<br>';
+		$list .= $track['audio_profile'];
+		if		($track['audio_channels'] == 1)	$channels = 'Mono';
+		elseif	($track['audio_channels'] == 2)	$channels = 'Stereo';
+		else									$channels = $track['audio_channels'] . ' Channels';
+		$list .= '<div class="ol_line"></div>';
+		$list .= $track['audio_bits_per_sample'] . ' bit | ' . $channels . ' | ' . formattedFrequency($track['audio_sample_rate']);
+	}
+	
+	if ($transcode == false) {
+		$list .= '<div class="ol_line"></div>';
+		$list .= 'Source:<img src="' . $cfg['img'] . 'tiny_check.png" alt="" class="tiny">';
+	}
+	
+	if (!$track['video_codec'] && !$track['audio_dataformat'] && $transcode == false)
+		$list .= '-';
+	
+	return 'onMouseOver="return overlib(\'' . addslashes(html($list)) . '\', CAPTION, \'Download track:\', WIDTH, 200);" onMouseOut="return nd();"';
+}
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | onMouseOver view cover                                                 |
+//  +------------------------------------------------------------------------+
+function onmouseoverViewCover($album_id) {
+	global $cfg, $db;
+	$query	= mysql_query('SELECT image_front_width * image_front_height AS front_resolution, image_back
+		FROM bitmap
+		WHERE album_id = "' . mysql_real_escape_string($album_id) . '"');
+	$bitmap = mysql_fetch_assoc($query);
+	$list = 'Front image:<img src="' . $cfg['img'] . 'tiny_' . ($bitmap['front_resolution'] >= $cfg['image_front_cover_treshold'] ? 'check' : 'uncheck') . '.png" alt="" class="tiny"><br>';
+	$list .= 'Back image:<img src="' . $cfg['img'] . 'tiny_' . ($bitmap['image_back'] ? 'check' : 'uncheck') . '.png" alt="" class="tiny">';
+	
+	return 'onMouseOver="return overlib(\'' . addslashes(html($list)) . '\', CAPTION, \'View pdf cover:&nbsp;\');" onMouseOut="return nd();"';
+}
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Genre navigator                                                        |
+//  +------------------------------------------------------------------------+
+function genreNavigator($genre_id) {
+	//echo 'id: ' . $genre_id;
+	global $cfg, $db;
+	$genre_seperation = '<span class="seperation">|</span>';
+	if ($genre_id) {
+		$nav			= array();
+		$nav['name'][]	= 'Library';
+		$nav['url'][]	= 'index.php';
+	}
+	else {
+		$nav			= array();
+		$nav['name'][]	= 'Library';
+		$nav['url'][]	= '';
+	}
+	/*for ($i=1; $i < strlen($genre_id); $i++) {
+		//$search	= substr($genre_id, 0, $i);
+		$search	= $genre_id;
+		$query	= mysql_query('SELECT genre, genre_id
+			FROM genre
+			WHERE genre_id = "' . mysql_real_escape_string($search) . '"
+			ORDER BY genre');
+		$genre	= mysql_fetch_assoc($query);
+		if ($genre) {
+			$nav['url'][]	= 'index.php?action=view2&amp;order=artist&amp;sort=asc&amp;&amp;genre_id=' . $search;
+			$nav['name'][]	= $genre['genre'];
+		}
+	//}
+	*/
+	
+	$query = mysql_query('SELECT genre, genre_id
+		FROM genre
+		WHERE genre_id = "' . mysql_real_escape_string($genre_id) . '"
+		ORDER BY genre');
+	$genre = mysql_fetch_assoc($query);
+	if (substr($genre_id, -1) == '~') {
+		$nav['name'][] = 'General';
+		$nav['url'][]  = '';
+	}
+	if ($genre['genre']) {
+		$nav['name'][] = $genre['genre'];
+		$nav['url'][]  = '';
+	}
+	$nav['open'] = true;
+	require_once('include/header.inc.php');
+
+/*	
+	//select genre
+	$query = mysql_query('SELECT genre, genre_id
+		FROM genre
+		
+		ORDER BY genre');
+		//echo 'rows: ' . ($genre_id);
+	if (mysql_num_rows($query) > 0) {
+		echo '<div class="genre">';
+		while ($genre = mysql_fetch_assoc($query))
+			echo  $genre_seperation . '<a href="index.php?action=view2&amp;order=artist&amp;sort=asc&amp;&amp;genre_id=' . $genre['genre_id'] . '">' . html($genre['genre']) . '</a>' . "\n";
+		/* $query = mysql_query('SELECT genre.genre_id FROM genre, album
+			WHERE album.genre_id = "' . mysql_real_escape_string($genre_id) . '"
+			AND genre.genre_id LIKE "' . mysql_real_escape_like($genre_id) . '_"');
+		if (mysql_fetch_row($query))
+			echo ' ' . $genre_seperation . ' <a href="index.php?action=view2&amp;order=artist&amp;sort=asc&amp;&amp;genre_id=' . $genre_id . '~"> General </a>';
+		
+	echo '&nbsp;' . $genre_seperation .'&nbsp;</div>' . "\n";
+	
+	}
+
+	if ($genre_id) {
+	} else {
+	echo '<br>' . "\n";	
+	}
+	*/
+	}
 
 
 //  +------------------------------------------------------------------------+
@@ -30,7 +343,6 @@ function executionTime() {
 	$seconds = round($miliseconds / 1000);
 	
 	if ($miliseconds < 1000)	return $miliseconds . ' ms';
-	if ($seconds == 1)			return '1 second';
 	if ($seconds < 60)			return $seconds . ' seconds';
 								return formattedTime($miliseconds);
 }
@@ -41,26 +353,16 @@ function executionTime() {
 //  +------------------------------------------------------------------------+
 //  | Formatted time                                                         |
 //  +------------------------------------------------------------------------+
-function formattedTime($time, $milisecond = true) {
-	$seconds 	= ($milisecond) ? round($time / 1000) : $time;
+function formattedTime($miliseconds) {
+	$seconds 	= round($miliseconds / 1000);
 	$hours		= floor($seconds / 3600);
 	$minutes 	= floor($seconds / 60) % 60;
 	$seconds 	= $seconds % 60;
 	
-	if ($hours > 0)	return $hours . ':' . sprintf('%02d:%02d', $minutes, $seconds);
-					return $minutes . sprintf(':%02d', $seconds);
-}
-
-
-
-
-//  +------------------------------------------------------------------------+
-//  | Formatted days                                                         |
-//  +------------------------------------------------------------------------+
-function formattedDays($seconds) {
-	$days = $seconds / 3600 / 24;
-	if ($days <= 1)	return  number_format($days, 1, '.', '') . ' day';
-					return  number_format($days, 1, '.', '') . ' days';
+	if ($hours >= 48)		return '(' . floor($hours / 24) . ' days) ' . $hours . ':' . sprintf('%02d:%02d', $minutes, $seconds);
+	elseif ($hours >= 24)	return '(' . floor($hours / 24) . ' day) ' . $hours . ':' . sprintf('%02d:%02d', $minutes, $seconds);
+	elseif ($hours > 0)		return $hours . ':' . sprintf('%02d:%02d', $minutes, $seconds);
+							return $minutes . sprintf(':%02d', $seconds);
 }
 
 
@@ -115,7 +417,7 @@ function formattedFrequency($frequency) {
 //  +------------------------------------------------------------------------+
 //  | Formatted date                                                         |
 //  +------------------------------------------------------------------------+
-function formattedDate($year = null, $month = null, $day = null) {
+function formattedDate($year = NULL, $month = NULL, $day = NULL) {
 	$date = '';
 	if (isset($day))	$date .= str_pad($day, 2, 0, STR_PAD_LEFT) . '&nbsp;';
 	if (isset($month))	$date .= formattedMonth($month) . '&nbsp;';
@@ -190,7 +492,7 @@ function escapeCmdArg($arg) {
 	}
 	else {
 		// Didn't use escapeshellarg() because of problems with UTF8
-		// Thanks Marc Maurice: http://positon.org/php-escapeshellarg-function-utf8-and-locales
+		// Thanks Marc Maurice: http://en.positon.org/post/PHP-escapeshellarg-function-UTF8-and-locales
 		return "'" . str_replace("'", "'\\''", $arg) . "'";
 	}
 }
@@ -285,7 +587,7 @@ function copyFilename($filename) {
 
 
 //  +------------------------------------------------------------------------+
-//  | BBcode                                                                 |
+//  | bbcode                                                                 |
 //  +------------------------------------------------------------------------+
 function bbcode($string) {
 	global $cfg;
@@ -319,7 +621,7 @@ function bbcode($string) {
 
 
 //  +------------------------------------------------------------------------+
-//  | BBcode list                                                            |
+//  | bbcode list                                                            |
 //  +------------------------------------------------------------------------+	
 function bblist($maches) {
 	$list = '';
@@ -329,14 +631,14 @@ function bblist($maches) {
 		else $list .= '<li>' . $value . '</li>';
 	}
 	
-	return '<ul class="bbcode">' . $list . '</ul>';
+	return '<ul>' . $list . '</ul>';
 }
 
 
 
 
 //  +------------------------------------------------------------------------+
-//  | BBcode to txt                                                          |
+//  | bbcode to txt                                                          |
 //  +------------------------------------------------------------------------+
 function bbcode2txt($string) {
 	$bbcode = array(
@@ -372,9 +674,9 @@ function bbcode2txt($string) {
 
 
 //  +------------------------------------------------------------------------+
-//  | BBcode reference title                                                 |
+//  | onMouseOver bbcode reference                                           |
 //  +------------------------------------------------------------------------+
-function bbcodeReferenceTitle() {
+function onmouseoverBbcodeReference() {
 	$list = '[br]<br>';
 	$list .= '[b]bold[/b]<br>';
 	$list .= '[i]italic[/i]<br>';
@@ -384,28 +686,28 @@ function bbcodeReferenceTitle() {
 	$list .= '[email]info@example.com[/email]<br>';
 	$list .= '[list][*]first[*]second[/list]';
 	
-	return 'title="' . html($list) . '"';
+	return 'onMouseOver="return overlib(\'' . addslashes(html($list)) . '\', CAPTION, \'BBCode reference:\');" onMouseOut="return nd();"';
 }
 
 
 
 
 //  +------------------------------------------------------------------------+
-//  | Image title                                                            |
+//  | onMouseOver image                                                      |
 //  +------------------------------------------------------------------------+
-function imageTitle($image_id) {
-	$image = '<img src="image.php?image_id=' . rawurlencode($image_id) . '" alt="" width="50" height="50">';
+function onmouseoverImage($image_id) {
+	$image =  '<img src="image.php?image_id=' . rawurlencode($image_id) . '" alt="" width="50" height="50" border="0">';
 	
-	return 'title="' . html($image) . '"';
+	return 'onMouseOver="return overlib(\'' . addslashes(html($image)) . '\', CELLPAD, 0);" onMouseOut="return nd();"';
 }
 
 
 
 
 //  +------------------------------------------------------------------------+
-//  | Access info title                                                      |
+//  | onMouseOver access info                                                |
 //  +------------------------------------------------------------------------+
-function accessInfoTitle($access) {
+function onmouseoverAccessInfo($access) {
 	switch ($access) {
 		case 'media':		$info = 'View media';						break;
 		case 'popular':		$info = 'View popular albums';				break;
@@ -421,95 +723,23 @@ function accessInfoTitle($access) {
 		case 'admin':		$info = 'Administrator';					break;
 	}
 	
-	return 'title="' . html($info) .'"';
+	return 'onMouseOver="return overlib(\'' . addslashes(html($info)) .'\');" onMouseOut="return nd();"';
 }
 
 
 
 
 //  +------------------------------------------------------------------------+
-//  | Navigator Player Profile                                               |
+//  | Random key                                                             |
 //  +------------------------------------------------------------------------+
-function navPlayerProfile() {
-	global $cfg, $db, $nav;
-	require_once(NJB_HOME_DIR . 'include/play.inc.php');
+function randomKey() {
+	$key = substr(randomHex(), 0, 30);
+	$key .= substr(randomHex(), 0, 30);
+	$key = base64_encode(pack('H*', $key));
+	$key = str_replace('+', '-', $key); // modified Base64 for URL
+	$key = str_replace('/', '_', $key);
 	
-	$query = mysqli_query($db, 'SELECT player_name, player_id FROM player ORDER BY player_name');
-	if (mysqli_num_rows($query) == 1)
-		return;
-		
-	if (@$_GET['navigator'] == 'selectPlayerProfile') {
-		if ($cfg['menu'] == 'media') {	
-			$nav			= array();
-			$nav['name'][]	= 'Media';
-			$nav['url'][]	= 'index.php';
-			$nav['class'][]	= 'nav';
-		}
-		if ($cfg['menu'] == 'favorite') {	
-			$nav			= array();
-			$nav['name'][]	= 'Favorites';
-			$nav['url'][]	= 'favorite.php';
-			$nav['class'][]	= 'nav';
-		}
-		elseif ($cfg['menu'] == 'playlist') {
-			$nav			= array();
-			$nav['name'][]	= 'Playlist';
-			$nav['url'][]	= 'playlist.php';
-			$nav['class'][]	= 'nav';
-		}
-		while ($player = mysqli_fetch_assoc($query)) {
-			if ($player['player_id'] == $cfg['player_id']) {
-				$nav['name'][]	= $player['player_name'];
-				$nav['url'][]	= '';
-				$nav['class'][]	= 'nav';
-			}
-			else {
-				$nav['name'][]	= $player['player_name'];
-			 	$nav['url'][]	= 'config.php?action=setPlayerProfile&amp;player_id=' . $player['player_id'] . '&amp;sign=' . $cfg['sign'] . '&amp;menu=' . $cfg['menu'];
-			 	$nav['class'][]	= 'suggest';
-			}
-		}
-	}
-	else {
-		$nav['name'][]	= $cfg['player_name'];
-		$nav['url'][]	= (($cfg['menu'] == 'media') ? 'index' :  $cfg['menu']) . '.php?navigator=selectPlayerProfile';
-		$nav['class'][]	= 'nav';
-	}
-}
-
-
-
-
-//  +------------------------------------------------------------------------+
-//  | Random sid                                                             |
-//  +------------------------------------------------------------------------+
-function randomSid() {
-	$uniqid	= uniqid();
-	$rand = randomHex(60 - strlen($uniqid));
-	return strrev(hex_to_base64url($uniqid . $rand));
-}
-
-
-
-
-//  +------------------------------------------------------------------------+
-//  | Random file sid                                                        |
-//  +------------------------------------------------------------------------+
-function randomFileSid() {
-	$uniqid	= uniqid();
-	$rand = randomHex(40 - strlen($uniqid));
-	return $rand . strrev($uniqid);
-}
-
-
-
-
-//  +------------------------------------------------------------------------+
-//  | Random seed                                                            |
-//  +------------------------------------------------------------------------+
-function randomSeed() {
-	$rand = randomHex(60);
-	return hex_to_base64url($rand);
+	return $key;
 }
 
 
@@ -518,30 +748,13 @@ function randomSeed() {
 //  +------------------------------------------------------------------------+
 //  | Random hex                                                             |
 //  +------------------------------------------------------------------------+
-function randomHex($lenght) {
-	$bytes = ceil($lenght / 2);
-	if  (function_exists('random_bytes') && $rand = @random_bytes($bytes)); // PHP >= 7
-	elseif (@is_readable('/dev/arandom') && $rand = @file_get_contents('/dev/arandom', null, null, null, $bytes));
-	elseif (@is_readable('/dev/urandom') && $rand = @file_get_contents('/dev/urandom', null, null, null, $bytes));
-	elseif (function_exists('openssl_random_pseudo_bytes') && $rand = @openssl_random_pseudo_bytes($bytes)); // PHP 5 >= 5.3.0
-	else {
-		$rand = '';
-		for ($i = 0; $i < $lenght; $i++)
-			$rand .= dechex(mt_rand(0, 15));
-		return $rand;
-	}
-	return substr(bin2hex($rand), -$lenght);
-}
+function randomHex() {
+	ob_start();
+	phpinfo();
+	$data = ob_get_contents();
+	ob_end_clean();
 
-
-
-
-//  +------------------------------------------------------------------------+
-//  | HEX to Base64url                                                       |
-//  +------------------------------------------------------------------------+
-function hex_to_base64url($hex) {
-	$base64 = base64_encode(pack('H*', $hex));
-	return rtrim(strtr($base64, '+/', '-_'), '='); // http://www.ietf.org/rfc/rfc4648.txt
+	return hmacsha1(uniqid('', true), $data);
 }
 
 
@@ -626,7 +839,7 @@ function sourceFile($extension, $bitrate, $id) {
 function validateSkin($skin) {
 	$dir = NJB_HOME_DIR . 'skin/' . $skin . '/';
 	
-	if (file_exists($dir . 'style.css') &&
+	if (file_exists($dir . 'styles.css') &&
 		file_exists($dir . 'template.footer.php') &&
 		file_exists($dir . 'template.header.php') &&
 		$dir == str_replace('\\', '/', realpath($dir)) . '/')
@@ -649,27 +862,27 @@ function updateCounter($album_id, $flag){
 	// flag 3 = cover
 	// flag 4 = record
 	
-	$query = mysqli_query($db, 'SELECT time FROM counter
-		WHERE album_id	= "' . mysqli_real_escape_string($db, $album_id) . '"
-		AND sid			= BINARY "' . mysqli_real_escape_string($db, $cfg['sid']) . '"
+	$query = mysql_query('SELECT time FROM counter
+		WHERE album_id	= "' . mysql_real_escape_string($album_id) . '"
+		AND sid			= BINARY "' . mysql_real_escape_string($cfg['sid']) . '"
 		AND flag		= ' . (int) $flag . '
 		ORDER BY time DESC LIMIT 1');
-	$counter = mysqli_fetch_assoc($query);
+	$counter = mysql_fetch_assoc($query);
 	$counter_time = $counter['time'];
 	
-	if ($counter_time + 60 - time() < 0) {
-		mysqli_query($db, 'INSERT INTO counter (sid, album_id, user_id, flag, time) VALUES (
-			"' . mysqli_real_escape_string($db, $cfg['sid']) . '",
-			"' . mysqli_real_escape_string($db, $album_id) . '",
+	if ($counter_time + 600 - time() < 0) {
+		mysql_query('INSERT INTO counter (sid, album_id, user_id, flag, time) VALUES (
+			"' . mysql_real_escape_string($cfg['sid']) . '",
+			"' . mysql_real_escape_string($album_id) . '",
 			' . (int) $cfg['user_id'] . ',
 			' . (int) $flag . ',
 			' . (int) time() . ')');
 	}
 	else {
-		mysqli_query($db, 'UPDATE counter
+		mysql_query('UPDATE counter
 			SET time = 			' . (int) time() . '
-			WHERE album_id = 	"' . mysqli_real_escape_string($db, $album_id) . '"
-			AND sid =			BINARY "' . mysqli_real_escape_string($db, $cfg['sid']) . '"
+			WHERE album_id = 	"' . mysql_real_escape_string($album_id) . '"
+			AND sid =			BINARY "' . mysql_real_escape_string($cfg['sid']) . '"
 			AND flag =			' . (int) $flag . ',
 			AND time =			' . (int) $counter_time);
 	}
@@ -683,7 +896,7 @@ function updateCounter($album_id, $flag){
 //  +------------------------------------------------------------------------+
 function createHiddenDir($dir) {
 	$file = $dir . 'index.php';
-	$content = '<!doctype html><html><head><title></title></head><body></body></html>';
+	$content = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head><title></title></head><body></body></html>';
 	
 	if (is_dir($dir) == false && @mkdir($dir, 0777) == false)
 		message(__FILE__, __LINE__, 'error', '[b]Failed to create directory:[/b][br]' . $dir);
@@ -709,4 +922,7 @@ function rrmdir($dir) {
 		}
 		rmdir($dir) or message(__FILE__, __LINE__, 'error', '[b]Failed to delete directory:[/b][br]' . $dir);
 	}
-}
+} 
+
+
+?>

@@ -1,6 +1,6 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -28,11 +28,12 @@
 require_once('include/initialize.inc.php');
 header('Content-type: application/json');
 
-$action = @$_REQUEST['action'];
+$action = getpost('action');
 
 if		($action == 'suggestAlbumArtist')	suggestAlbumArtist();
 elseif	($action == 'suggestTrackArtist')	suggestTrackArtist();
 elseif	($action == 'suggestTrackTitle')	suggestTrackTitle();
+elseif	($action == 'suggestAlbumTitle')	suggestAlbumTitle();
 elseif	($action == 'loginStage1')			loginStage1();
 else	message(__FILE__, __LINE__, 'error', '[b]Unsupported input value for[/b][br]action');
 exit();
@@ -46,19 +47,19 @@ exit();
 function suggestAlbumArtist() {
 	global $cfg, $db;
 	authenticate('access_media', false, false, true);
-	$artist = @$_GET['artist'];
+	$artist = get('artist');
 	
 	if ($artist == '')
 		exit('[""]');
 		
-	$query = mysqli_query($db, 'SELECT artist_alphabetic FROM album
-		WHERE artist_alphabetic LIKE "%' . mysqli_real_escape_like($db, $artist) . '%"
-		OR artist LIKE "%' . mysqli_real_escape_like($db, $artist) . '%"
-		OR artist SOUNDS LIKE "' . mysqli_real_escape_string($db, $artist) . '"
+	$query = mysql_query('SELECT artist_alphabetic FROM album
+		WHERE artist_alphabetic LIKE "%' . mysql_real_escape_like($artist) . '%"
+		OR artist LIKE "%' . mysql_real_escape_like($artist) . '%"
+		OR artist SOUNDS LIKE "' . mysql_real_escape_string($artist) . '"
 		GROUP BY artist_alphabetic ORDER BY artist_alphabetic LIMIT ' . (int) $cfg['autosuggest_limit']);
 	
 	$data = array();
-	while ($album = mysqli_fetch_assoc($query))
+	while ($album = mysql_fetch_assoc($query))
 		$data[] = (string) $album['artist_alphabetic'];
 	
 	echo safe_json_encode($data);
@@ -73,18 +74,18 @@ function suggestAlbumArtist() {
 function suggestTrackArtist() {
 	global $cfg, $db;
 	authenticate('access_media', false, false, true);
-	$artist = @$_GET['artist'];
+	$artist = get('artist');
 	
 	if ($artist == '')
 		exit('[""]');
 		
-	$query = mysqli_query($db, 'SELECT artist FROM track
-		WHERE artist LIKE "%' . mysqli_real_escape_like($db, $artist) . '%"
-		OR artist SOUNDS LIKE "' . mysqli_real_escape_string($db, $artist) . '"
+	$query = mysql_query('SELECT artist FROM track
+		WHERE artist LIKE "%' . mysql_real_escape_like($artist) . '%"
+		OR artist SOUNDS LIKE "' . mysql_real_escape_string($artist) . '"
 		GROUP BY artist ORDER BY artist LIMIT ' . (int) $cfg['autosuggest_limit']);
 	
 	$data = array();
-	while ($album = mysqli_fetch_assoc($query))
+	while ($album = mysql_fetch_assoc($query))
 		$data[] = (string) $album['artist'];
 	
 	echo safe_json_encode($data);
@@ -99,22 +100,49 @@ function suggestTrackArtist() {
 function suggestTrackTitle() {
 	global $cfg, $db;
 	authenticate('access_media', false, false, true);
-	$title = @$_GET['title'];
+	$title = get('title');
 	
 	if ($title == '')
 			exit('[""]');
 		
-	$query = mysqli_query($db, 'SELECT title FROM track
-		WHERE title LIKE "%' . mysqli_real_escape_like($db, $title) . '%"
-		OR title SOUNDS LIKE "' . mysqli_real_escape_string($db, $title) . '"
+	$query = mysql_query('SELECT title FROM track
+		WHERE title LIKE "%' . mysql_real_escape_like($title) . '%"
+		OR title SOUNDS LIKE "' . mysql_real_escape_string($title) . '"
 		GROUP BY title ORDER BY title LIMIT ' . (int) $cfg['autosuggest_limit']);
 	
 	$data = array();
-	while ($track = mysqli_fetch_assoc($query))
+	while ($track = mysql_fetch_assoc($query))
 		$data[] = (string) $track['title'];
 		
 	echo safe_json_encode($data);
 }
+
+
+//  +------------------------------------------------------------------------+
+//  | Suggest album title                                                    |
+//  +------------------------------------------------------------------------+
+function suggestAlbumTitle() {
+	global $cfg, $db;
+	authenticate('access_media', false, false, true);
+	$title = get('title');
+	
+	if ($title == '')
+			exit('[""]');
+		
+	$query = mysql_query('SELECT album FROM album
+		WHERE album LIKE "%' . mysql_real_escape_like($title) . '%"
+		OR album SOUNDS LIKE "' . mysql_real_escape_string($title) . '"
+		GROUP BY album ORDER BY album LIMIT ' . (int) $cfg['autosuggest_limit']);
+	
+	$data = array();
+	while ($track = mysql_fetch_assoc($query))
+		$data[] = (string) $track['album'];
+		
+	echo safe_json_encode($data);
+}
+
+
+
 
 
 
@@ -127,55 +155,45 @@ function loginStage1() {
 	header('Expires: Mon, 9 Oct 2000 18:00:00 GMT');
 	header('Cache-Control: no-store, no-cache, must-revalidate');
 		
-	$username		= @$_POST['username'];
-	$lock_ip		= @$_POST['lock_ip'] ? 1 : 0;
-	$ip				= @$_POST['ip'];
-	$sid			= @$_COOKIE['netjukebox_sid'];
-	$sign			= randomSeed();
-	$session_seed	= randomSeed();
+	$sid		= cookie('netjukebox_sid');
+	$username	= post('username');
+	$sign		= post('sign');
 	
-	if ($lock_ip && $ip != $_SERVER['REMOTE_ADDR'])
+	$query		= mysql_query('SELECT seed FROM user WHERE username = "' . mysql_real_escape_string($username) . '"');
+	$user 		= mysql_fetch_assoc($query);
+	
+	$query		= mysql_query('SELECT ip, seed, sign FROM session WHERE sid = BINARY "' . mysql_real_escape_string($sid) . '"');
+	$session	= mysql_fetch_assoc($query);
+	
+	if ($session['ip'] == '')
+		message(__FILE__, __LINE__, 'error', '[b]Login failed[/b][br]netjukebox requires cookies to login.[br]Enable cookies in your browser and try again.[br][url=index.php][img]small_login.png[/img]login[/url]');
+	
+	if ($session['ip'] != $_SERVER['REMOTE_ADDR'])
 		message(__FILE__, __LINE__, 'error', '[b]Login failed[/b][br]Unexpected IP address[br][url=index.php][img]small_login.png[/img]login[/url]');
 	
-	// Update current session
-	mysqli_query($db, 'UPDATE session SET
-		logged_in			= 0,
-		ip					= "' . mysqli_real_escape_string($db, $_SERVER['REMOTE_ADDR']) . '",
-		user_agent			= "' . mysqli_real_escape_string($db, $_SERVER['HTTP_USER_AGENT']) . '",
-		sign				= "' . mysqli_real_escape_string($db, $sign) . '",
-		seed				= "' . mysqli_real_escape_string($db, $session_seed) . '",
-		pre_login_time		= ' . (string) round(microtime(true) * 1000) . ',
-		lock_ip				= ' . (int) $lock_ip . '
-		WHERE sid			= BINARY "' . mysqli_real_escape_string($db, $sid) . '"');
-	if (mysqli_affected_rows($db) == 0) {
-		// Create new session
-		$sid = randomSid();
-		
-		mysqli_query($db, 'INSERT INTO session (logged_in, create_time, ip, user_agent, sid, sign, seed, pre_login_time, lock_ip) VALUES (
-			0,
-			' . (int) time() . ',
-			"' . mysqli_real_escape_string($db, $_SERVER['REMOTE_ADDR']) . '",
-			"' . mysqli_real_escape_string($db, $_SERVER['HTTP_USER_AGENT']) . '",
-			"' . mysqli_real_escape_string($db, $sid) . '",
-			"' . mysqli_real_escape_string($db, $sign) . '",
-			"' . mysqli_real_escape_string($db, $session_seed) . '",
-			' . (string) round(microtime(true) * 1000) . ',
-			' . (int) $lock_ip . ')');
-			
-		setcookie('netjukebox_sid', $sid, time() + 31536000, null, null, NJB_HTTPS, true);
+	if (hmacsha1($cfg['server_seed'], $session['sign']) == $sign) {
+		$sign = randomKey();
+		mysql_query('UPDATE session
+			SET	sign		= "' . mysql_real_escape_string($sign) . '",
+			pre_login_time	= ' . (string) round(microtime(true) * 1000) . '
+			WHERE sid		= BINARY "' . mysql_real_escape_string($sid) . '"');
+	}
+	else {
+		// login will fail!
+		$sign = randomKey();
 	}
 	
-	$query		= mysqli_query($db, 'SELECT seed FROM user WHERE username = "' . mysqli_real_escape_string($db, $username) . '"');
-	$user 		= mysqli_fetch_assoc($query);
-	
 	// Always calculate fake seed to prevent script execution time differences
-	$fake_seed	= substr(hmacsha1($cfg['server_seed'], $username . 'NeZlFgqDoh9hc-BkczryQFIcpoBng3I_vXaWtOKS'), 0, 30);
-	$fake_seed	.= substr(hmacsha1($cfg['server_seed'], $username . 'g-FE6H0MJ1n0lNo2D7XLachV8WE-xmEcwsXNZqlQ'), 0, 30);
-	$fake_seed	= hex_to_base64url($fake_seed);
+	$fake_seed		= substr(hmacsha1($cfg['server_seed'], $username . 'NeZlFgqDoh9hc-BkczryQFIcpoBng3I_vXaWtOKS'), 0, 30);
+	$fake_seed		.= substr(hmacsha1($cfg['server_seed'], $username . 'g-FE6H0MJ1n0lNo2D7XLachV8WE-xmEcwsXNZqlQ'), 0, 30);
+	$fake_seed		= base64_encode(pack('H*', $fake_seed));
+	$fake_seed		= str_replace('+', '-', $fake_seed); // modified Base64 for URL
+	$fake_seed		= str_replace('/', '_', $fake_seed);
 		
 	$data = array();
-	$data['user_seed']		= (string) ($user['seed'] == '') ? $fake_seed : $user['seed'];
-	$data['session_seed']	= (string) $session_seed;
-	$data['sign']			= (string) $sign;
+	$data['user_seed']		= ($user['seed'] == '') ? $fake_seed : $user['seed'];
+	$data['session_seed']	= $session['seed'];
+	$data['sign']			= $sign;
 	echo safe_json_encode($data);
 }
+?>

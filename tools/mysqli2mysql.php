@@ -1,6 +1,6 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -31,8 +31,7 @@ header('Cache-Control: no-store, no-cache, must-revalidate');
 
 
 
-echo '<!doctype html><html><head><title></title></head><body>' . "\n";
-exit('<strong>BEFORE USE MAKE A BACKUP</strong><br><br>netjukebox MySQLi to MySQL script converter.<br>Comment out line ' . __LINE__ . ' to run this script.</body></html>');
+//exit('<strong>BEFORE USE MAKE A BACKUP</strong><br><br>netjukebox MySQLi to MySQL script converter.<br>Comment out line ' . __LINE__ . ' to run this script.');
 
 
 
@@ -51,15 +50,19 @@ define('NJB_HOME_DIR', str_replace('\\', '/', $directory) . '/');
 //  | Rename                                                                 |
 //  +------------------------------------------------------------------------+
 echo '<strong>rename:</strong> include/mysqli.inc.php to include/mysql.inc.php';
+@ob_flush();
+flush();
 
 if (file_exists(NJB_HOME_DIR . 'include/mysqli.inc.php')) {
 	@unlink(NJB_HOME_DIR . 'include/mysql.inc.php');
-	@rename(NJB_HOME_DIR . 'include/mysqli.inc.php', NJB_HOME_DIR . 'include/mysql.inc.php') or exit(' <font color="#FF0000">Failed to rename</font></body></html>');
+	@rename(NJB_HOME_DIR . 'include/mysqli.inc.php', NJB_HOME_DIR . 'include/mysql.inc.php') or exit(' <font color="#FF0000">Failed to rename</font>');
 }
 elseif (file_exists(NJB_HOME_DIR . 'include/mysql.inc.php') == false)
-	exit(' <font color="#FF0000">Failed to rename</font></body></html>');
+	exit(' <font color="#FF0000">Failed to rename</font>');
 
-echo ' <font color="#008000">successful</font><br>' . "\n";
+echo ' <font color="#008000">successful</font><br>';
+@ob_flush();
+flush();
 
 
 
@@ -92,6 +95,7 @@ $files = array(
 	'include/cache.inc.php',
 	'include/config.inc.php',
 	'include/footer.inc.php',
+	'include/globalize.inc.php',
 	'include/header.inc.php',
 	'include/initialize.inc.php',
 	'include/library.inc.php',
@@ -100,16 +104,19 @@ $files = array(
 	'include/stream.inc.php');
 
 foreach ($files as $file) {
-	echo '<strong>convert:</strong> ' . htmlspecialchars($file, ENT_COMPAT);
-
-	$content = @file_get_contents(NJB_HOME_DIR . $file) or exit('<font color="#FF0000">Failed to open file</font></body></html>');
+	echo '<strong>convert:</strong> ' . htmlentities($file);
+	@ob_flush();
+	flush();
+	
+	$content = @file_get_contents(NJB_HOME_DIR . $file) or exit(' <font color="#FF0000">Failed to open file</font>');
 	$content = mysqli2mysql($content);
 	if (file_put_contents(NJB_HOME_DIR . $file, $content) === false)
-		exit(' <font color="#FF0000">Failed to write file</font></body></html>');
+		exit(' <font color="#FF0000">Failed to write file</font>');
 	
-	echo ' <font color="#008000">successful</font><br>' . "\n";
+	echo ' <font color="#008000">successful</font><br>';
+	@ob_flush();
+	flush();
 }
-echo '</body></html>';
 
 
 

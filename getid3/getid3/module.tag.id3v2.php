@@ -442,14 +442,10 @@ class getid3_id3v2 extends getid3_handler
 		} // end footer
 
 		if (isset($thisfile_id3v2['comments']['genre'])) {
-			$genres = array();
 			foreach ($thisfile_id3v2['comments']['genre'] as $key => $value) {
-				foreach ($this->ParseID3v2GenreString($value) as $genre) {
-					$genres[] = $genre;
-				}
+				unset($thisfile_id3v2['comments']['genre'][$key]);
+				$thisfile_id3v2['comments'] = getid3_lib::array_merge_noclobber($thisfile_id3v2['comments'], array('genre'=>$this->ParseID3v2GenreString($value)));
 			}
-			$thisfile_id3v2['comments']['genre'] = array_unique($genres);
-			unset($key, $value, $genres, $genre);
 		}
 
 		if (isset($thisfile_id3v2['comments']['track'])) {
@@ -507,13 +503,6 @@ class getid3_id3v2 extends getid3_handler
 		if (strpos($genrestring, "\x00") === false) {
 			$genrestring = preg_replace('#\(([0-9]{1,3})\)#', '$1'."\x00", $genrestring);
 		}
-
-		// note: MusicBrainz Picard incorrectly stores plaintext genres separated by "/" when writing in ID3v2.3 mode, hack-fix here:
-		// replace / with NULL, then replace back the two ID3v1 genres that legitimately have "/" as part of the single genre name
-		$genrestring = str_replace('/', "\x00", $genrestring);
-		$genrestring = str_replace('Pop'."\x00".'Funk', 'Pop/Funk', $genrestring);
-		$genrestring = str_replace('Rock'."\x00".'Rock', 'Folk/Rock', $genrestring);
-
 		$genre_elements = explode("\x00", $genrestring);
 		foreach ($genre_elements as $element) {
 			$element = trim($element);
@@ -990,6 +979,7 @@ class getid3_id3v2 extends getid3_handler
 			$parsedFrame['encodingid']   = $frame_textencoding;
 			$parsedFrame['encoding']     = $this->TextEncodingNameLookup($frame_textencoding);
 
+			$parsedFrame['data']         = $parsedFrame['data'];
 			$parsedFrame['language']     = $frame_language;
 			$parsedFrame['languagename'] = $this->LanguageLookup($frame_language, false);
 			$parsedFrame['description']  = $frame_description;
@@ -1412,15 +1402,14 @@ class getid3_id3v2 extends getid3_handler
 
 				$parsedFrame['image_mime'] = '';
 				$imageinfo = array();
-				if ($imagechunkcheck = getid3_lib::GetDataImageSize($parsedFrame['data'], $imageinfo)) {
-					if (($imagechunkcheck[2] >= 1) && ($imagechunkcheck[2] <= 3)) {
-						$parsedFrame['image_mime']       = 'image/'.getid3_lib::ImageTypesLookup($imagechunkcheck[2]);
-						if ($imagechunkcheck[0]) {
-							$parsedFrame['image_width']  = $imagechunkcheck[0];
-						}
-						if ($imagechunkcheck[1]) {
-							$parsedFrame['image_height'] = $imagechunkcheck[1];
-						}
+				$imagechunkcheck = getid3_lib::GetDataImageSize($parsedFrame['data'], $imageinfo);
+				if (($imagechunkcheck[2] >= 1) && ($imagechunkcheck[2] <= 3)) {
+					$parsedFrame['image_mime']       = 'image/'.getid3_lib::ImageTypesLookup($imagechunkcheck[2]);
+					if ($imagechunkcheck[0]) {
+						$parsedFrame['image_width']  = $imagechunkcheck[0];
+					}
+					if ($imagechunkcheck[1]) {
+						$parsedFrame['image_height'] = $imagechunkcheck[1];
 					}
 				}
 

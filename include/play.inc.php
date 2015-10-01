@@ -1,6 +1,6 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -28,34 +28,34 @@
 if (PHP_SAPI == 'cli' && isset($cfg['player_id']) == false)
 	$cfg['player_id'] = 0;
 
-$query = mysqli_query($db, 'SELECT player_name, player_type, player_host, player_port, player_pass, media_share, player_id
+$query = mysql_query('SELECT player_name, player_type, player_host, player_port, player_pass, media_share, player_id
 	FROM player
-	WHERE player_id = ' . mysqli_real_escape_string($db, $cfg['player_id']));
-if (mysqli_num_rows($query) == 0) {
-	$query = mysqli_query($db, 'SELECT player_name, player_type, player_host, player_port, player_pass, media_share, player_id
+	WHERE player_id = ' . mysql_real_escape_string($cfg['player_id']));
+if (mysql_num_rows($query) == 0) {
+	$query = mysql_query('SELECT player_name, player_type, player_host, player_port, player_pass, media_share, player_id
 		FROM player
 		ORDER BY player_name');
 }
-if (mysqli_num_rows($query) == 0) {
-	mysqli_query($db, 'INSERT INTO player (player_name, player_type, player_host, player_port, player_pass, media_share)
+if (mysql_num_rows($query) == 0) {
+	mysql_query('INSERT INTO player (player_name, player_type, player_host, player_port, player_pass, media_share)
 		VALUES (
-		"Music Player Daemon",
+		"Music Player Daemon (default)",
 		"2",
 		"127.0.0.1",
 		"6600",
 		"",
 		"")');
-	$query = mysqli_query($db, 'SELECT player_name, player_type, player_host, player_port, player_pass, media_share, player_id
+	$query = mysql_query('SELECT player_name, player_type, player_host, player_port, player_pass, media_share, player_id
 		FROM player');
 }
-$player = mysqli_fetch_assoc($query);
-$cfg['player_name']		= $player['player_name'];
-$cfg['player_type']		= $player['player_type'];
-$cfg['player_host']		= $player['player_host'];
-$cfg['player_port']		= $player['player_port'];
-$cfg['player_pass']		= $player['player_pass'];
-$cfg['media_share']		= $player['media_share'];
-$cfg['player_id']		= $player['player_id'];
+$player = mysql_fetch_assoc($query);
+$cfg['player_name']	= $player['player_name'];
+$cfg['player_type']	= $player['player_type'];
+$cfg['player_host']	= $player['player_host'];
+$cfg['player_port']	= $player['player_port'];
+$cfg['player_pass']	= $player['player_pass'];
+$cfg['media_share']	= $player['media_share'];
+$cfg['player_id']	= $player['player_id'];
 
 
 
@@ -66,10 +66,10 @@ $cfg['player_id']		= $player['player_id'];
 function httpq($action, $argument = false) {
 	global $cfg;
 	
-	$request =  'GET /' . $action . '?p=' . rawurlencode($cfg['player_pass']) . (($argument) ? '&' . $argument : '') . ' HTTP/1.0' . "\r\n\r\n";
+	$request =  'GET /' . $action . '?p=' . rawurldecode($cfg['player_pass']) . (($argument) ? '&' . $argument : '') . ' HTTP/1.0' . "\r\n\r\n";
 	
-	$soket = @fsockopen($cfg['player_host'], $cfg['player_port'], $error_no, $error_string, 1) or message(__FILE__, __LINE__, 'error', '[b]Winamp httpQ error[/b][br]Failed to connect to: ' . $cfg['player_host'] . ':' . $cfg['player_port'] . '[br]' . $error_string . '[br][url=config.php?action=playerProfile][img]small_httpq.png[/img]Player profile[/url]');
-	@fwrite($soket, $request) or message(__FILE__, __LINE__, 'error', '[b]Winamp httpQ error[/b][br]Failed to write to: ' . $cfg['player_host'] . ':' . $cfg['player_port'] );
+	$soket = @fsockopen($cfg['player_host'], $cfg['player_port'], $error_no, $error_string, 1) or message(__FILE__, __LINE__, 'error', '[b]Winamp httpQ error[/b][br]Failed to connect to: ' . $cfg['player_host'] . ':' . $cfg['player_port'] . '[br]' . $error_string);
+	@fwrite($soket, $request) or message(__FILE__, __LINE__, 'error', '[b]Winamp httpQ error[/b][br]Failed to write to: ' . $cfg['player_host'] . ':' . $cfg['player_port']);
 	$content = stream_get_contents($soket);
 	fclose($soket);
 	
@@ -96,12 +96,10 @@ function httpq($action, $argument = false) {
 function vlc($command) {
 	global $cfg;
 	
-	$request  = 'GET /requests/status.xml?command=' . $command . ' HTTP/1.1' . "\r\n";
-	$request .= 'Host: ' . $cfg['player_host'] . ':' . $cfg['player_port'] . "\r\n";
-	$request .= ($cfg['player_pass'] != '') ? 'Authorization: Basic ' . base64_encode(':' . $cfg['player_pass']) . "\r\n" : '';
+	$request = 'GET /requests/status.xml?command=' . $command . ' HTTP/1.1' . "\r\n";
 	$request .= 'Connection: Close' . "\r\n\r\n";
 	
-	$soket = @fsockopen($cfg['player_host'], $cfg['player_port'], $error_no, $error_string, 1) or message(__FILE__, __LINE__, 'error', '[b]videoLAN error[/b][br]Failed to connect to: ' . $cfg['player_host'] . ':' . $cfg['player_port'] . '[br]' . $error_string . '[br][url=config.php?action=playerProfile][img]small_vlc.png[/img]Player profile[/url]');
+	$soket = @fsockopen($cfg['player_host'], $cfg['player_port'], $error_no, $error_string, 1) or message(__FILE__, __LINE__, 'error', '[b]videoLAN error[/b][br]Failed to connect to: ' . $cfg['player_host'] . ':' . $cfg['player_port'] . '[br]' . $error_string);
 	@fwrite($soket, $request) or message(__FILE__, __LINE__, 'error', '[b]videoLAN error[/b][br]Failed to write to: ' . $cfg['player_host'] . ':' . $cfg['player_port']);
 	$content = stream_get_contents($soket);
 	fclose($soket);
@@ -123,26 +121,16 @@ function vlc($command) {
 function mpd($command) {
 	global $cfg;
 	
-	$soket = @fsockopen($cfg['player_host'], $cfg['player_port'], $error_no, $error_string, 1) or message(__FILE__, __LINE__, 'error', '[b]Music Player Daemon error[/b][br]Failed to connect to: ' . $cfg['player_host'] . ':' . $cfg['player_port'] . '[br]' . $error_string . '[br][url=config.php?action=playerProfile][img]small_mpd.png[/img]Player profile[/url]');
+	$soket = @fsockopen($cfg['player_host'], $cfg['player_port'], $error_no, $error_string, 3) or message(__FILE__, __LINE__, 'error', '[b]Music Player Daemon error[/b][br]Failed to connect to: ' . $cfg['player_host'] . ':' . $cfg['player_port'] . '[br]' . $error_string);
+	@fwrite($soket, $command . "\n") or message(__FILE__, __LINE__, 'error', '[b]Music Player Daemon error[/b][br]Failed to write to: ' . $cfg['player_host'] . ':' . $cfg['player_port']);
 	
 	$line = trim(fgets($soket, 1024)); 
 	if (substr($line, 0, 3) == 'ACK')		{fclose($soket); message(__FILE__, __LINE__, 'error', '[b]Music Player Daemon error[/b][br]Error: ' . $line);}
-	if (substr($line, 0, 6) != 'OK MPD') 	{fclose($soket); message(__FILE__, __LINE__, 'error', '[b]Music Player Daemon error[/b][br]Unexpected response from: ' . $cfg['player_host'] . ':' . $cfg['player_port']);}
+	if (substr($line, 0, 6) != 'OK MPD') 	{fclose($soket); message(__FILE__, __LINE__, 'error', '[b]Music Player Daemon error[/b][br]No valid server detected at: ' . $cfg['player_host'] . ':' . $cfg['player_port']);}
 	
 	$cfg['mpd_version'] = '0.5.0';
 	if (preg_match('#([0-9]+\.[0-9]+\.[0-9]+)$#', $line, $matches)) // OK MPD 0.16.0
 		$cfg['mpd_version'] = $matches[1];
-	
-	if ($cfg['player_pass'] != '') {
-		@fwrite($soket, 'password ' . $cfg['player_pass'] . "\n") or message(__FILE__, __LINE__, 'error', '[b]Music Player Daemon error[/b][br]Failed to write to: ' . $cfg['player_host'] . ':' . $cfg['player_port']);
-		$line = trim(@fgets($soket, 1024));
-		if (substr($line, 0, 3) == 'ACK') {
-			fclose($soket);
-			message(__FILE__, __LINE__, 'error', '[b]Music Player Daemon error[/b][br]Error: ' . $line);
-		}
-	}
-	
-	@fwrite($soket, $command . "\n") or message(__FILE__, __LINE__, 'error', '[b]Music Player Daemon error[/b][br]Failed to write to: ' . $cfg['player_host'] . ':' . $cfg['player_port']);
 	
 	$array = array();
 	while (!feof($soket)) {
@@ -164,7 +152,7 @@ function mpd($command) {
 			list($key, $value) = explode(':', $line, 2);
 			$array[] = iconv('UTF-8', NJB_DEFAULT_CHARSET, $value);
 		}
-		elseif ($command == 'playlist') {
+		elseif ($command == 'playlist' || $command == 'playlistinfo') {
 			// 0:file: directory/filename.extension
 			list($key, $value) = explode(': ', $line, 2);
 			$array[] = iconv('UTF-8', NJB_DEFAULT_CHARSET, $value);
@@ -181,36 +169,30 @@ function mpd($command) {
 
 
 
-
 //  +------------------------------------------------------------------------+
 //  | Music Player Daemon silent                                             |
 //  +------------------------------------------------------------------------+
 function mpdSilent($command) {
 	global $cfg;
 	
-	$soket = @fsockopen($cfg['player_host'], $cfg['player_port'], $error_no, $error_string, 1);
+	$soket = @fsockopen($cfg['player_host'], $cfg['player_port'], $error_no, $error_string, 3);
 	if (!$soket)
-		return false;
-	
-	$line = trim(fgets($soket, 1024));
-	if (substr($line, 0, 3) == 'ACK')			{fclose($soket); return false;}
-	if (substr($line, 0, 6) != 'OK MPD') 		{fclose($soket); return false;}
-	
-	if ($cfg['player_pass'] != '') {
-		$write = @fwrite($soket, 'password ' . $cfg['player_pass'] . "\n");
-		if (!$write)
-			return false;
-		$line = trim(@fgets($soket, 1024));
-		if (substr($line, 0, 3) == 'ACK') {
-			fclose($soket);
-			return false;
-		}
-	}
+		return false; 
 	
 	$write = @fwrite($soket, $command . "\n");
 	if (!$write)
 		return false;
 	
+	$line = trim(fgets($soket, 1024));
+	if (substr($line, 0, 3) == 'ACK')			{fclose($soket); return false;}
+	//if (substr($line, 0, 6) != 'OK NJB_MPD') 	{fclose($soket); return false;}
+	if (substr($line, 0, 6) != 'OK MPD') 	{fclose($soket); return false;}
+	
+	$cfg['mpd_version'] = '0.5.0';
+	if (preg_match('#([0-9]+\.[0-9]+\.[0-9]+)$#', $line, $matches)) // OK MPD 0.16.0
+		$cfg['mpd_version'] = $matches[1];
+	
+	$array = array();
 	while (!feof($soket)) {
 		$line = trim(@fgets($soket, 1024));
 		if (substr($line, 0, 3) == 'ACK') {
@@ -219,8 +201,27 @@ function mpdSilent($command) {
 		}
 		if (substr($line, 0, 2) == 'OK') {
 			fclose($soket);
-			return true;
+			if ($command == 'status' && isset($array['time']) && version_compare($cfg['mpd_version'], '0.16.0', '<')) {
+				list($seconds, $dummy) = explode(':', $array['time'], 2);
+				$array['elapsed'] = $seconds;
+			}
+			return $array;
 		}
+		if ($command == 'playlist' && version_compare($cfg['mpd_version'], '0.16.0', '<')) {
+			// 0:directory/filename.extension
+			list($key, $value) = explode(':', $line, 2);
+			$array[] = iconv('UTF-8', NJB_DEFAULT_CHARSET, $value);	
+		}
+		elseif ($command == 'playlist') {
+			// 0:file: directory/filename.extension
+			list($key, $value) = explode(': ', $line, 2);
+			$array[] = iconv('UTF-8', NJB_DEFAULT_CHARSET, $value);
+		}
+		else {
+			// name: value
+			list($key, $value) = explode(': ', $line, 2);
+			$array[$key] = $value;	
+		}    
 	}    
 	fclose($soket);
 	return false;
@@ -234,19 +235,18 @@ function mpdSilent($command) {
 //  +------------------------------------------------------------------------+
 function mpdUpdate() {
 	global $cfg, $db;
-	
 	// Store current player settings
 	$temp['player_host'] = $cfg['player_host'];
 	$temp['player_port'] = $cfg['player_port'];
 	$temp['player_pass'] = $cfg['player_pass'];
 	
 	// Music Player Daemon update
-	$query = mysqli_query($db, 'SELECT player_host, player_port, player_pass
+	$query = mysql_query('SELECT player_host, player_port, player_pass
 		FROM player
 		WHERE player_host != ""
 		AND player_port != ""
 		AND player_type = ' . NJB_MPD);
-	while ($player = mysqli_fetch_assoc($query)) {
+	while ($player = mysql_fetch_assoc($query)) {
 		$cfg['player_host'] = $player['player_host'];
 		$cfg['player_port'] = $player['player_port'];
 		$cfg['player_pass'] = $player['player_pass'];
@@ -258,3 +258,4 @@ function mpdUpdate() {
 	$cfg['player_port'] = $temp['player_port'];
 	$cfg['player_pass'] = $temp['player_pass'];
 }
+?>

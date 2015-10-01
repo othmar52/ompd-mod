@@ -1,6 +1,10 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | O!MPD, Copyright © 2015 Artur Sierzant		                         |
+//  | http://www.ompd.pl                                             		 |
+//  |                                                                        |
+//  |                                                                        |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -28,8 +32,8 @@
 require_once('include/initialize.inc.php');
 $cfg['menu'] = 'config';
 
-$action		= @$_REQUEST['action'];
-$user_id	= @$_REQUEST['user_id'];
+$action		= getpost('action');
+$user_id	= getpost('user_id');
 
 if		($action == '')						home();
 
@@ -37,11 +41,10 @@ elseif	($action == 'editUser')				editUser($user_id);
 elseif	($action == 'updateUser')			{updateUser($user_id);	home();}
 elseif	($action == 'deleteUser')			{deleteUser($user_id);	home();}
 
-elseif	($action == 'currentUser')			currentUser();
-
 elseif	($action == 'online')				online();
 elseif	($action == 'resetSessions')		{resetSessions();		online();}
 
+elseif	($action == 'accessRight')			accessRight();
 elseif	($action == 'userStatistics')		userStatistics();
 elseif	($action == 'resetUserStatistics')	{resetUserStatistics();	userStatistics();}
 
@@ -58,63 +61,75 @@ function home() {
 	global $cfg, $db;
 	authenticate('access_admin');
 	
-	// Navigator
+	// formattedNavigator
 	$nav			= array();
 	$nav['name'][]	= 'Configuration';
 	$nav['url'][]	= 'config.php';
 	$nav['name'][]	= 'Users';
 	require_once('include/header.inc.php');
 ?>
-<table class="border">
+<div class="buttons">
+	<span>
+	<?php if ($cfg['access_admin']) echo '<a href="users.php?action=editUser&amp;user_id=0" onMouseOver="return overlib(\'Add new user\');" onMouseOut="return nd();">Add new user</a>'; ?>
+	</span>
+</div>
+<div id="usersTab" class="noSwipe">
+<table cellspacing="0" cellpadding="0" class="border">
 <tr class="header">
 	<td class="space"></td>
-	<td>Username</td>
+	<td class="matrix vert"><div><span>Username</span></div></td>
 	<td class="textspace"></td>
-	<td class="matrix">Media</td>
-	<td class="matrix">Popular</td>
-	<td class="matrix">Favorite</td>
-	<td class="matrix">Playlist</td>
-	<td class="matrix">Play</td>
-	<td class="matrix">Add</td>
-	<td class="matrix">Stream</td>
-	<td class="matrix">Download</td>
-	<td class="matrix">Cover</td>
-	<td class="matrix">Record</td>
-	<td class="matrix">Statistics</td>
-	<td class="matrix">Admin</td>
+	<td class="matrix vert"><div><span>Media</span></div></td>
+	<td class="matrix vert"><div><span>Popular</span></div></td>
+	<td class="matrix vert"><div><span>Favorite</span></div></td>
+	<td class="matrix vert"><div><span>Playlist</span></div></td>
+	<td class="matrix vert"><div><span>Play</span></div></td>
+	<td class="matrix vert"><div><span>Add</span></div></td>
+	<td class="matrix vert"><div><span>Stream</span></div></td>
+	<td class="matrix vert"><div><span>Download</span></div></td>
+	<!--
+	<td class="matrix vert"><div><span>Cover</span></div></td>
+	<td class="matrix vert"><div><span>Record</span></div></td>
+	-->
+	<td class="matrix vert"><div><span>Statistics</span></div></td>
+	<td class="matrix vert"><div><span>Admin</span></div></td>
 	<td class="space"></td>
-	<td><a href="users.php?action=editUser&amp;user_id=0" title="Add a new user"><img src="<?php echo $cfg['img']; ?>small_header_new.png" alt="" class="small"></a></td>
+	<td class="matrix vert"><div><span>Delete</span></div></td>
 	<td class="space"></td>
 </tr>
+<tr class="line"><td colspan="18"></td></tr>
 <?php
 	$i=0;
-	$check = '<img src="' . $cfg['img'] . 'small_check.png" alt="" class="small space">';
-	$uncheck = '<img src="' . $cfg['img'] . 'small_uncheck.png" alt="" class="small space">';
-	$query = mysqli_query($db, 'SELECT username, access_media, access_popular, access_cover, access_stream, access_playlist, access_play, access_add, access_record, access_download, access_favorite, access_statistics, access_admin, user_id FROM user ORDER BY username');
-	while ($user = mysqli_fetch_assoc($query)) { ?>
+	$check = '<i class="fa fa-check fa-fw icon-selected"></i>';
+	$uncheck = '<i class="fa fa-times fa-fw icon-unava"></i>';
+	$query = mysql_query('SELECT username, access_media, access_popular, access_cover, access_stream, access_playlist, access_play, access_add, access_record, access_download, access_favorite, access_statistics, access_admin, user_id FROM user ORDER BY username');
+	while ($user = mysql_fetch_assoc($query)) { ?>
 <tr class="<?php if ($cfg['username'] == $user['username']) echo 'select'; else echo ($i & 1) ? 'even mouseover' : 'odd mouseover'; $i++ ?>">
 	<td></td>
-	<td><a href="users.php?action=editUser&amp;user_id=<?php echo $user['user_id']; ?>"><img src="<?php echo $cfg['img']; ?>small_user.png" alt="" class="small space"><?php echo html($user['username']); ?></a></td>
+	<td style="white-space: nowrap"><a href="users.php?action=editUser&amp;user_id=<?php echo $user['user_id']; ?>"><i class="fa fa-user fa-fw icon-small"></i>&nbsp;<?php echo html($user['username']); ?></a></td>
 	<td></td>
-	<td class="text-align-center" <?php echo accessInfoTitle('media'); ?>><?php echo $user['access_media'] ? $check : $uncheck; ?></td>
-	<td class="text-align-center" <?php echo accessInfoTitle('popular'); ?>><?php echo $user['access_popular'] ? $check : $uncheck; ?></td>
-	<td class="text-align-center" <?php echo accessInfoTitle('favorite'); ?>><?php echo $user['access_favorite'] ? $check : $uncheck; ?></td>
-	<td class="text-align-center" <?php echo accessInfoTitle('playlist'); ?>><?php echo $user['access_playlist'] ? $check : $uncheck; ?></td>
-	<td class="text-align-center" <?php echo accessInfoTitle('play'); ?>><?php echo $user['access_play'] ? $check : $uncheck; ?></td>
-	<td class="text-align-center" <?php echo accessInfoTitle('add'); ?>><?php echo $user['access_add'] ? $check : $uncheck; ?></td>
-	<td class="text-align-center" <?php echo accessInfoTitle('stream'); ?>><?php echo $user['access_stream'] ? $check : $uncheck; ?></td>
-	<td class="text-align-center" <?php echo accessInfoTitle('download'); ?>><?php echo $user['access_download'] ? $check : $uncheck; ?></td>
-	<td class="text-align-center" <?php echo accessInfoTitle('cover'); ?>><?php echo $user['access_cover'] ? $check : $uncheck; ?></td>
-	<td class="text-align-center" <?php echo accessInfoTitle('record'); ?>><?php echo $user['access_record'] ? $check : $uncheck; ?></td>
-	<td class="text-align-center" <?php echo accessInfoTitle('statistics'); ?>><?php echo $user['access_statistics'] ? $check : $uncheck; ?></td>
-	<td class="text-align-center" <?php echo accessInfoTitle('admin'); ?>><?php echo $user['access_admin'] ? $check : $uncheck; ?></td>
+	<td align="center" <?php echo onmouseoverAccessInfo('media'); ?>><?php echo $user['access_media'] ? $check : $uncheck; ?></td>
+	<td align="center" <?php echo onmouseoverAccessInfo('popular'); ?>><?php echo $user['access_popular'] ? $check : $uncheck; ?></td>
+	<td align="center" <?php echo onmouseoverAccessInfo('favorite'); ?>><?php echo $user['access_favorite'] ? $check : $uncheck; ?></td>
+	<td align="center" <?php echo onmouseoverAccessInfo('playlist'); ?>><?php echo $user['access_playlist'] ? $check : $uncheck; ?></td>
+	<td align="center" <?php echo onmouseoverAccessInfo('play'); ?>><?php echo $user['access_play'] ? $check : $uncheck; ?></td>
+	<td align="center" <?php echo onmouseoverAccessInfo('add'); ?>><?php echo $user['access_add'] ? $check : $uncheck; ?></td>
+	<td align="center" <?php echo onmouseoverAccessInfo('stream'); ?>><?php echo $user['access_stream'] ? $check : $uncheck; ?></td>
+	<td align="center" <?php echo onmouseoverAccessInfo('download'); ?>><?php echo $user['access_download'] ? $check : $uncheck; ?></td>
+	<!--
+	<td align="center" <?php echo onmouseoverAccessInfo('cover'); ?>><?php echo $user['access_cover'] ? $check : $uncheck; ?></td>
+	<td align="center" <?php echo onmouseoverAccessInfo('record'); ?>><?php echo $user['access_record'] ? $check : $uncheck; ?></td>
+	-->
+	<td align="center" <?php echo onmouseoverAccessInfo('statistics'); ?>><?php echo $user['access_statistics'] ? $check : $uncheck; ?></td>
+	<td align="center" <?php echo onmouseoverAccessInfo('admin'); ?>><?php echo $user['access_admin'] ? $check : $uncheck; ?></td>
 	<td></td>
-	<td><a href="users.php?action=deleteUser&amp;user_id=<?php echo $user['user_id']; ?>&amp;sign=<?php echo $cfg['sign']; ?>" onclick="return confirm('Are you sure you want to delete user: <?php echo addslashes(html($user['username'])); ?>?');"><img src="<?php echo $cfg['img']; ?>small_delete.png" alt="" class="small"></a></td>
+	<td><a href="users.php?action=deleteUser&amp;user_id=<?php echo $user['user_id']; ?>&amp;sign=<?php echo $cfg['sign']; ?>" onClick="return confirm('Are you sure you want to delete user: <?php echo addslashes(html($user['username'])); ?>?');" onMouseOver="return overlib('Delete');" onMouseOut="return nd();"><i class="fa fa-times-circle fa-fw icon-small"></i></a></td>
 	<td></td>
 </tr>
 <?php
 	}
 	echo '</table>' . "\n";
+	echo '</div>' . "\n";
 	require_once('include/footer.inc.php');
 }
 
@@ -143,13 +158,12 @@ function editUser($user_id) {
 		$user['access_record']		= false;
 		$user['access_statistics']	= false;
 		$user['access_admin']		= false;
-		$user['access_search']		= 255;
-		// $txt_menu					= 'Add user';
+		$txt_menu					= 'Add user';
 		$txt_password				= 'Password:';
 	}
 	else {
 		// Edit user configutaion
-		$query = mysqli_query($db, 'SELECT
+		$query = mysql_query('SELECT
 			username,
 			access_media,
 			access_popular,
@@ -162,165 +176,173 @@ function editUser($user_id) {
 			access_add,
 			access_record,
 			access_statistics,
-			access_admin,
-			access_search
+			access_admin
 			FROM user
 			WHERE user_id = ' . (int) $user_id);
-		$user = mysqli_fetch_assoc($query);
+		$user = mysql_fetch_assoc($query);
 		if ($user == false)
 			message(__FILE__, __LINE__, 'error', '[b]Error[/b][br]user_id not found in database');
 		
+		$txt_menu		= 'Edit user';
 		$txt_password	= 'New password:';
 	}
 	
-	// Navigator
+	// formattedNavigator
 	$nav			= array();
 	$nav['name'][]	= 'Configuration';
 	$nav['url'][]	= 'config.php';
 	$nav['name'][]	= 'Users';
 	$nav['url'][]	= 'users.php';
-	$nav['name'][]	= $user['username'];
+	$nav['name'][]	= $txt_menu;
 	require_once('include/header.inc.php');
 	
 	// Store seed temporarily in the session database
 	// After acepting a new password copy the seed to the user database
-	$session_seed = randomSeed();
-	mysqli_query($db, 'UPDATE session
-		SET seed	= "' . mysqli_real_escape_string($db, $session_seed) . '"
-		WHERE sid	= BINARY "' . mysqli_real_escape_string($db, $cfg['sid']) . '"');
+	$session_seed = randomKey();
+	mysql_query('UPDATE session
+		SET seed	= "' . mysql_real_escape_string($session_seed) . '"
+		WHERE sid	= BINARY "' . mysql_real_escape_string($cfg['sid']) . '"');
 ?>
-<form id="userform" action="users.php" method="post" autocomplete="off">
-	<input type="hidden" name="action" value="updateUser">
-	<input type="hidden" name="user_id" value="<?php echo $user_id; ?>">
-	<input type="hidden" name="sign" value="<?php echo $cfg['sign']; ?>">
-<table class="border bottom_space">
-<tr class="header">
-	<td class="space"></td>
-	<td>Access</td>
-	<td class="space"></td>
-</tr>
-<tr class="odd" <?php echo accessInfoTitle('media'); ?>>
-	<td></td>
-	<td><label><input type="checkbox" name="access_media" value="1" class="space"<?php if ($user['access_media']) echo ' checked'; ?>>Media</label></td>
-	<td></td>
-</tr>
-<tr class="even" <?php echo accessInfoTitle('popular'); ?>>
-	<td></td>
-	<td><label><input type="checkbox" name="access_popular" value="1" class="space"<?php if ($user['access_popular']) echo ' checked'; ?>>Popular</label></td>
-	<td></td>
-</tr>
-<tr class="odd" <?php echo accessInfoTitle('favorite'); ?>>
-	<td></td>
-	<td><label><input type="checkbox" name="access_favorite" value="1" class="space"<?php if ($user['access_favorite']) echo ' checked'; ?>>Favorite</label></td>
-	<td></td>
-</tr>
-<tr class="even" <?php echo accessInfoTitle('playlist'); ?>>
-	<td></td>
-	<td><label><input type="checkbox" name="access_playlist" value="1" class="space"<?php if ($user['access_playlist']) echo ' checked'; ?>>Playlist</label></td>
-	<td></td>
-</tr>
-<tr class="odd" <?php echo accessInfoTitle('play'); ?>>
-	<td></td>
-	<td><label><input type="checkbox" name="access_play" value="1" class="space"<?php if ($user['access_play']) echo ' checked'; ?>>Play</label></td>
-	<td></td>
-</tr>
-<tr class="even" <?php echo accessInfoTitle('add'); ?>>
-	<td></td>
-	<td><label><input type="checkbox" name="access_add" value="1" class="space"<?php if ($user['access_add']) echo ' checked'; ?>>Add</label></td>
-	<td></td>
-</tr>
-<tr class="odd" <?php echo accessInfoTitle('stream'); ?>>
-	<td></td>
-	<td><label><input type="checkbox" name="access_stream" value="1" class="space"<?php if ($user['access_stream']) echo ' checked'; ?>>Stream</label></td>
-	<td></td>
-</tr>
-<tr class="even" <?php echo accessInfoTitle('download'); ?>>
-	<td></td>
-	<td><label><input type="checkbox" name="access_download" value="1" class="space"<?php if ($user['access_download']) echo ' checked'; ?>>Download</label></td>
-	<td></td>
-</tr>
-<tr class="odd" <?php echo accessInfoTitle('cover'); ?>>
-	<td></td>
-	<td><label><input type="checkbox" name="access_cover" value="1" class="space"<?php if ($user['access_cover']) echo ' checked'; ?>>Cover</label></td>
-	<td></td>
-</tr>
-<tr class="even" <?php echo accessInfoTitle('record'); ?>>
-	<td></td>
-	<td><label><input type="checkbox" name="access_record" value="1" class="space"<?php if ($user['access_record']) echo ' checked'; ?>>Record</label></td>
-	<td></td>
-</tr>
-<tr class="odd" <?php echo accessInfoTitle('statistics'); ?>>
-	<td></td>
-	<td><label><input type="checkbox" name="access_statistics" value="1" class="space"<?php if ($user['access_statistics']) echo ' checked'; ?>>Statistics</label></td>
-	<td></td>
-</tr>
-<tr class="even" <?php echo accessInfoTitle('admin'); ?>>
-	<td></td>
-	<td><label><input type="checkbox" name="access_admin" value="1" class="space"<?php if ($user['access_admin']) echo ' checked'; ?>>Admin</label></td>
-	<td></td>
-</tr>
-<tr class="section">
-	<td class="space"></td>
-	<td>Internet search</td>
-	<td class="space"></td>
-</tr>
-<?php
-	for ($i = 0; $i < count($cfg['search_name']); $i++) {
-?>
-<tr class="<?php echo ($i & 1) ? 'even' : 'odd'; ?>">
-	<td></td>
-	<td><label><input type="checkbox" name="access_search[]" value="<?php echo pow(2,$i); ?>" class="space"<?php if (pow(2,$i) & $user['access_search']) echo ' checked'; ?>><?php echo html($cfg['search_name'][$i]); ?></label></td>
-	<td></td>
-</tr>
-<?php
-	}
-?>	
-<tr class="footer">
-	<td></td>
-	<td>Username:</td>
-	<td></td>
-</tr>
-<tr class="footer">
-	<td></td>
-	<td><input type="text" name="new_username" value="<?php echo html($user['username']); ?>" maxlength="255" <?php echo ($user['username'] == $cfg['anonymous_user']) ? 'readonly class="short readonly" onfocus="this.blur();"' : 'class="short"'; ?>></td>
-	<td></td>
-</tr>
-<tr class="footer">
-	<td></td>
-	<td><?php echo $txt_password; ?></td>
-	<td></td>
-</tr>
-<tr class="footer">
-	<td></td>
-	<td><input type="password" name="new_password" <?php echo ($user['username'] == $cfg['anonymous_user']) ? 'readonly class="short readonly" onfocus="this.blur();"' : 'class="short"'; ?>></td>
-	<td></td>
-</tr>
-<tr class="footer">
-	<td></td>
-	<td>Confirm password:</td>
-	<td></td>
-</tr>
-<tr class="footer">
-	<td></td>
-	<td><input type="password" name="chk_password" <?php echo ($user['username'] == $cfg['anonymous_user']) ? 'readonly class="short readonly" onfocus="this.blur();"' : 'class="short"'; ?>></td>
-	<td></td>
-</tr>
-<tr class="footer"><td colspan="3"></td></tr>
-</table>
-<a href="javascript:hashPassword();" class="button space">save</a><!--
---><a href="users.php" class="button">cancel</a>
-</form>
-
-
 <script type="text/javascript">
-function hashPassword()	{
-	userform.new_username.className = 'short readonly';
-	userform.new_password.className = 'short readonly';
-	userform.chk_password.className = 'short readonly';
-	userform.new_password.value = hmacsha1(hmacsha1(userform.new_password.value, '<?php echo $session_seed; ?>'), '<?php echo $session_seed; ?>');
-	userform.chk_password.value = hmacsha1(hmacsha1(userform.chk_password.value, '<?php echo $session_seed; ?>'), '<?php echo $session_seed; ?>');
-	userform.submit();
+<!--
+if (hmacsha1('key', 'The quick brown fox jumps over the lazy dog') != 'de7c9b85b8b78aa6bc8a7a36f70a90701c9db4d9') {
+	document.write('<table cellspacing="10" cellpadding="0" class="error">');
+	document.write('<tr>');
+	document.write('	<td valign="top"><img src="<?php echo $cfg['img']; ?>medium_message_error.png" alt=""><\/td>');
+	document.write('	<td valign="top"><strong>JavaScript error<\/strong><br>Unexpected SHA1 checksum result.<\/td>');
+	document.write('<\/tr>');
+	document.write('<\/table>');
 }
+else if (typeof XMLHttpRequest == 'undefined') {
+	document.write('<table cellspacing="10" cellpadding="0" class="error">');
+	document.write('<tr>');
+	document.write('	<td valign="top"><img src="<?php  echo $cfg['img']; ?>medium_message_error.png" alt=""><\/td>');
+	document.write('	<td valign="top"><strong>Native XMLHttpRequest support is required<\/strong><br>');
+	document.write('	Enable XMLHttpRequest or get a modern web browser.<\/td>');
+	document.write('<\/tr>');
+	document.write('<\/table>');
+}
+else {
+	document.write('<form id="editUser" action="users.php" method="post" onSubmit="return hashPassword(this);" autocomplete="off">');
+	document.write('	<input type="hidden" name="action" value="updateUser">');
+	document.write('	<input type="hidden" name="user_id" value="<?php echo $user_id; ?>">');
+	document.write('	<input type="hidden" name="sign" value="<?php echo $cfg['sign']; ?>">');
+	document.write('<table cellspacing="0" cellpadding="0" class="border">');
+	document.write('<tr class="header">');
+	document.write('	<td ><\/td>');
+	document.write('	<td>Access<\/td>');
+	document.write('	<td ><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="line"><td colspan="4"><\/td><\/tr>');
+	document.write('<tr class="lh3" <?php echo addslashes(onmouseoverAccessInfo('media')); ?>>');
+	document.write('	<td><\/td>');
+	document.write('	<td>&nbsp;&nbsp;<input type="checkbox" name="access_media" value="1" <?php if ($user['access_media']) echo ' checked'; ?>>Media<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="lh3" <?php echo addslashes(onmouseoverAccessInfo('popular')); ?>>');
+	document.write('	<td><\/td>');
+	document.write('	<td>&nbsp;&nbsp;<input type="checkbox" name="access_popular" value="1" <?php if ($user['access_popular']) echo ' checked'; ?>>Popular<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="lh3" <?php echo addslashes(onmouseoverAccessInfo('favorite')); ?>>');
+	document.write('	<td><\/td>');
+	document.write('	<td>&nbsp;&nbsp;<input type="checkbox" name="access_favorite" value="1" <?php if ($user['access_favorite']) echo ' checked'; ?>>Favorite<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="lh3" <?php echo addslashes(onmouseoverAccessInfo('playlist')); ?>>');
+	document.write('	<td><\/td>');
+	document.write('	<td>&nbsp;&nbsp;<input type="checkbox" name="access_playlist" value="1" <?php if ($user['access_playlist']) echo ' checked'; ?>>Playlist<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="lh3" <?php echo addslashes(onmouseoverAccessInfo('play')); ?>>');
+	document.write('	<td><\/td>');
+	document.write('	<td>&nbsp;&nbsp;<input type="checkbox" name="access_play" value="1" <?php if ($user['access_play']) echo ' checked'; ?>>Play<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="lh3" <?php echo addslashes(onmouseoverAccessInfo('add')); ?>>');
+	document.write('	<td><\/td>');
+	document.write('	<td>&nbsp;&nbsp;<input type="checkbox" name="access_add" value="1" <?php if ($user['access_add']) echo ' checked'; ?>>Add<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="lh3" <?php echo addslashes(onmouseoverAccessInfo('stream')); ?>>');
+	document.write('	<td><\/td>');
+	document.write('	<td>&nbsp;&nbsp;<input type="checkbox" name="access_stream" value="1" <?php if ($user['access_stream']) echo ' checked'; ?>>Stream<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="lh3" <?php echo addslashes(onmouseoverAccessInfo('download')); ?>>');
+	document.write('	<td><\/td>');
+	document.write('	<td>&nbsp;&nbsp;<input type="checkbox" name="access_download" value="1" <?php if ($user['access_download']) echo ' checked'; ?>>Download<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	/* document.write('<tr class="lh3" <?php echo addslashes(onmouseoverAccessInfo('cover')); ?>>');
+	document.write('	<td><\/td>');
+	document.write('	<td>&nbsp;&nbsp;<input type="checkbox" name="access_cover" value="1" <?php if ($user['access_cover']) echo ' checked'; ?>>Cover<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="lh3" <?php echo addslashes(onmouseoverAccessInfo('record')); ?>>');
+	document.write('	<td><\/td>');
+	document.write('	<td>&nbsp;&nbsp;<input type="checkbox" name="access_record" value="1" <?php if ($user['access_record']) echo ' checked'; ?>>Record<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>'); */
+	document.write('<tr class="lh3" <?php echo addslashes(onmouseoverAccessInfo('statistics')); ?>>');
+	document.write('	<td><\/td>');
+	document.write('	<td>&nbsp;&nbsp;<input type="checkbox" name="access_statistics" value="1" <?php if ($user['access_statistics']) echo ' checked'; ?>>Statistics<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="lh3" <?php echo addslashes(onmouseoverAccessInfo('admin')); ?>>');
+	document.write('	<td><\/td>');
+	document.write('	<td>&nbsp;&nbsp;<input type="checkbox" name="access_admin" value="1" <?php if ($user['access_admin']) echo ' checked'; ?>>Admin<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="line"><td colspan="3"><\/td><\/tr>');
+	document.write('<tr class="footer">');
+	document.write('	<td><\/td>');
+	document.write('	<td>Username:<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="footer">');
+	document.write('	<td><\/td>');
+	document.write('	<td><input type="text" name="new_username" value="<?php echo addslashes(html($user['username'])); ?>" maxlength="255" <?php echo ($user['username'] == $cfg['anonymous_user']) ? 'readonly class="login readonly" onfocus="this.blur();"' : 'class="login"'; ?>><\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="footer">');
+	document.write('	<td><\/td>');
+	document.write('	<td><?php echo $txt_password; ?><\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="footer">');
+	document.write('	<td><\/td>');
+	document.write('	<td><input type="password" name="new_password" <?php echo ($user['username'] == $cfg['anonymous_user']) ? 'readonly class="login readonly" onfocus="this.blur();"' : 'class="login"'; ?>><\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="footer">');
+	document.write('	<td><\/td>');
+	document.write('	<td>Confirm password:<\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="footer">');
+	document.write('	<td><\/td>');
+	document.write('	<td><input type="password" name="chk_password" <?php echo ($user['username'] == $cfg['anonymous_user']) ? 'readonly class="login readonly" onfocus="this.blur();"' : 'class="login"'; ?>><\/td>');
+	document.write('	<td><\/td>');
+	document.write('<\/tr>');
+	document.write('<tr class="footer"><td colspan="3"><\/td><\/tr>');
+	document.write('<\/table>');
+	document.write('<br>');
+	document.write('<div class="buttons"><span><a href="#" onclick="$(\'#editUser\').submit();">Save</a><\/span>');
+	document.write('<span><a href="users.php">Cancel<\/a></span>');
+	document.write('<\/div><\/form>');
+	
+	
+	function hashPassword(thisform)	{
+		thisform.new_username.className = 'login readonly';
+		thisform.new_password.className = 'login readonly';
+		thisform.chk_password.className = 'login readonly';
+		thisform.new_password.value = hmacsha1(hmacsha1(thisform.new_password.value, '<?php echo $session_seed; ?>'), '<?php echo $session_seed; ?>');
+		thisform.chk_password.value = hmacsha1(hmacsha1(thisform.chk_password.value, '<?php echo $session_seed; ?>'), '<?php echo $session_seed; ?>');
+		return true;
+	}
+}
+//-->
 </script>
 <?php
 	require_once('include/footer.inc.php');
@@ -336,34 +358,29 @@ function updateUser($user_id) {
 	global $cfg, $db;
 	authenticate('access_admin', false, true, true);
 	
-	$new_username		= @$_POST['new_username'];
-	$new_password		= @$_POST['new_password'];
-	$chk_password		= @$_POST['chk_password'];
-	$access_media		= @$_POST['access_media']		? 1 : 0;
-	$access_popular		= @$_POST['access_popular']		? 1 : 0;
-	$access_favorite	= @$_POST['access_favorite']	? 1 : 0;
-	$access_playlist	= @$_POST['access_playlist']	? 1 : 0;
-	$access_play		= @$_POST['access_play']		? 1 : 0;
-	$access_add			= @$_POST['access_add']			? 1 : 0;
-	$access_stream		= @$_POST['access_stream']		? 1 : 0;
-	$access_download	= @$_POST['access_download']	? 1 : 0;
-	$access_cover		= @$_POST['access_cover']		? 1 : 0;
-	$access_record		= @$_POST['access_record']		? 1 : 0;
-	$access_statistics	= @$_POST['access_statistics']	? 1 : 0;
-	$access_admin		= @$_POST['access_admin']		? 1 : 0;
-	$access_search_array= @$_POST['access_search'];
-
-	$access_search = 0;
+	$new_username		= post('new_username');
+	$new_password		= post('new_password');
+	$chk_password		= post('chk_password');
+	$access_media		= post('access_media')		? 1 : 0;
+	$access_popular		= post('access_popular')	? 1 : 0;
+	$access_favorite	= post('access_favorite')	? 1 : 0;
+	$access_playlist	= post('access_playlist')	? 1 : 0;
+	$access_play		= post('access_play')		? 1 : 0;
+	$access_add			= post('access_add')		? 1 : 0;
+	$access_stream		= post('access_stream')		? 1 : 0;
+	$access_download	= post('access_download')	? 1 : 0;
+	$access_cover		= post('access_cover')		? 1 : 0;
+	$access_record		= post('access_record')		? 1 : 0;
+	$access_statistics	= post('access_statistics')	? 1 : 0;
+	$access_admin		= post('access_admin')		? 1 : 0;
 	
-	for ($i = 0; $i < count($access_search_array) && $i < 7; $i++)
-		$access_search += (int) $access_search_array[$i];
 	
-	$query = mysqli_query($db, 'SELECT user_id FROM user WHERE user_id = ' . (int) $user_id);
-	if (mysqli_fetch_row($query) == false && $user_id != '0')
+	$query = mysql_query('SELECT user_id FROM user WHERE user_id = ' . (int) $user_id);
+	if (mysql_fetch_row($query) == false && $user_id != '0')
 		message(__FILE__, __LINE__, 'error', '[b]Error[/b][br]user_id not found in database');
 	
-	$query = mysqli_query($db, 'SELECT user_id FROM user WHERE user_id != ' . (int) $user_id . ' AND username = "' . mysqli_real_escape_string($db, $new_username) . '"');
-	if (mysqli_fetch_row($query))
+	$query = mysql_query('SELECT user_id FROM user WHERE user_id != ' . (int) $user_id . ' AND username = "' . mysql_real_escape_string($new_username) . '"');
+	if (mysql_fetch_row($query))
 		message(__FILE__, __LINE__, 'warning', '[b]Username already exist[/b][br]Choose another username[br][url=users.php?action=editUser&user_id='. rawurlencode($user_id) . '][img]small_back.png[/img]Back to previous page[/url]');
 	
 	
@@ -385,15 +402,16 @@ function updateUser($user_id) {
 	}
 	
 	if ($user_id == '0') {
-		mysqli_query($db, 'INSERT INTO user (username) VALUES ("")');
-		$user_id = mysqli_insert_id($db);
+		mysql_query('INSERT INTO user (username) VALUES ("")');
+		$user_id = mysql_insert_id($db);
 	}
 	
 	if ($password_set) {
-		mysqli_query($db, 'UPDATE user SET
-			username			= "' . mysqli_real_escape_string($db, $new_username) . '",
-			password			= "' . mysqli_real_escape_string($db, $new_password) . '",
-			seed				= "' . mysqli_real_escape_string($db, $cfg['session_seed']) . '",
+		mysql_query('UPDATE user SET
+			username			= "' . mysql_real_escape_string($new_username) . '",
+			password			= "' . mysql_real_escape_string($new_password) . '",
+			seed				= "' . mysql_real_escape_string($cfg['session_seed']) . '",
+			version				= 1,
 			access_media		= ' . (int) $access_media . ',
 			access_popular		= ' . (int) $access_popular . ',
 			access_favorite 	= ' . (int) $access_favorite . ',
@@ -405,17 +423,16 @@ function updateUser($user_id) {
 			access_cover		= ' . (int) $access_cover . ',
 			access_record		= ' . (int) $access_record . ',
 			access_statistics	= ' . (int) $access_statistics . ',
-			access_admin		= ' . (int) $access_admin . ',
-			access_search		= ' . (int) $access_search . '
+			access_admin		= ' . (int) $access_admin . '
 			WHERE user_id		= ' . (int) $user_id);
 		
-		mysqli_query($db, 'UPDATE session
+		mysql_query('UPDATE session
 			SET logged_in	= 0
 			WHERE user_id	= ' . (int) $user_id);
 	}
 	else {
-		mysqli_query($db, 'UPDATE user SET
-			username			= "' . mysqli_real_escape_string($db, $new_username) . '",
+		mysql_query('UPDATE user SET
+			username			= "' . mysql_real_escape_string($new_username) . '",
 			access_media		= ' . (int) $access_media . ',
 			access_popular		= ' . (int) $access_popular . ',
 			access_favorite		= ' . (int) $access_favorite . ',
@@ -427,8 +444,7 @@ function updateUser($user_id) {
 			access_cover		= ' . (int) $access_cover . ',
 			access_record		= ' . (int) $access_record . ',
 			access_statistics	= ' . (int) $access_statistics . ',
-			access_admin		= ' . (int) $access_admin . ',
-			access_search		= ' . (int) $access_search . '
+			access_admin		= ' . (int) $access_admin . '
 			WHERE user_id		= ' . (int) $user_id);
 	}
 }
@@ -444,8 +460,8 @@ function deleteUser($user_id) {
 	authenticate('access_admin', false, true, true);
 	if (checkAdminAcount($user_id) == false)
 		message(__FILE__, __LINE__, 'warning', '[b]There must be at least one user with admin privilege[/b][br][url=users.php][img]small_back.png[/img]Back to previous page[/url]');
-	mysqli_query($db, 'DELETE FROM user WHERE user_id = ' . (int) $user_id);
-	mysqli_query($db, 'DELETE FROM session WHERE user_id = ' . (int) $user_id);
+	mysql_query('DELETE FROM user WHERE user_id = ' . (int) $user_id);
+	mysql_query('DELETE FROM session WHERE user_id = ' . (int) $user_id);
 }
 
 
@@ -456,121 +472,13 @@ function deleteUser($user_id) {
 //  +------------------------------------------------------------------------+
 function checkAdminAcount($user_id) {
 	global $db;
-	$query = mysqli_query($db, 'SELECT user_id 
+	$query = mysql_query('SELECT user_id 
 		FROM user 
 		WHERE user_id != ' . (int) $user_id . '
 		AND access_admin');
-	$user = mysqli_fetch_assoc($query);
+	$user = mysql_fetch_assoc($query);
 	if ($user['user_id'] == '') return false;
 	else						return true;
-}
-
-
-
-
-//  +------------------------------------------------------------------------+
-//  | Current user                                                           |
-//  +------------------------------------------------------------------------+
-function currentUser() {
-	global $cfg;
-	authenticate('access_logged_in');
-	
-	// Navigator
-	$nav			= array();
-	$nav['name'][]	= 'Configuration';
-	$nav['url'][]	= 'config.php';
-	$nav['name'][]	= 'User';
-	$nav['url'][]	= '';
-	$nav['name'][]	= $cfg['username'];
-	$nav['url'][]	= '';
-	require_once('include/header.inc.php');
-	
-	$check = '<img src="' . $cfg['img'] . 'small_check.png" alt="" class="small space">';
-	$uncheck = '<img src="' . $cfg['img'] . 'small_uncheck.png" alt="" class="small space">';
-?>
-<table class="border">
-<tr class="header">
-	<td class="space"></td>
-	<td>Access&nbsp;right</td>
-	<td class="space"></td>
-</tr>
-<tr class="odd mouseover" <?php echo accessInfoTitle('media'); ?>>
-	<td></td>
-	<td><?php echo $cfg['access_media'] ? $check : $uncheck; ?>Media</td>
-	<td></td>
-</tr>
-<tr class="even mouseover" <?php echo accessInfoTitle('popular'); ?>>
-	<td></td>
-	<td><?php echo $cfg['access_popular'] ? $check : $uncheck; ?>Popular</td>
-	<td></td>
-</tr>
-<tr class="odd mouseover" <?php echo accessInfoTitle('favorite'); ?>>
-	<td></td>
-	<td><?php echo $cfg['access_favorite'] ? $check : $uncheck; ?>Favorite</td>
-	<td></td>
-</tr>
-<tr class="even mouseover" <?php echo accessInfoTitle('playlist'); ?>>
-	<td></td>
-	<td><?php echo $cfg['access_playlist'] ? $check : $uncheck; ?>Playlist</td>
-	<td></td>
-</tr>
-<tr class="odd mouseover" <?php echo accessInfoTitle('play'); ?>>
-	<td></td>
-	<td><?php echo $cfg['access_play'] ? $check : $uncheck; ?>Play</td>
-	<td></td>
-</tr>
-<tr class="even mouseover" <?php echo accessInfoTitle('add'); ?>>
-	<td></td>
-	<td><?php echo $cfg['access_add'] ? $check : $uncheck; ?>Add</td>
-	<td></td>
-</tr>
-<tr class="odd mouseover" <?php echo accessInfoTitle('stream'); ?>>
-	<td></td>
-	<td><?php echo $cfg['access_stream'] ? $check : $uncheck; ?>Stream</td>
-	<td></td>
-</tr>
-<tr class="even mouseover" <?php echo accessInfoTitle('download'); ?>>
-	<td></td>
-	<td><?php echo $cfg['access_download'] ? $check : $uncheck; ?>Download</td>
-	<td></td>
-</tr>
-<tr class="odd mouseover" <?php echo accessInfoTitle('cover'); ?>>
-	<td></td>
-	<td><?php echo $cfg['access_cover'] ? $check : $uncheck; ?>Cover</td>
-	<td></td>
-</tr>
-<tr class="even mouseover" <?php echo accessInfoTitle('record'); ?>>
-	<td></td>
-	<td><?php echo $cfg['access_record'] ? $check : $uncheck; ?>Record</td>
-	<td></td>
-</tr>
-<tr class="odd mouseover" <?php echo accessInfoTitle('statistics'); ?>>
-	<td></td>
-	<td><?php echo $cfg['access_statistics'] ? $check : $uncheck; ?>Statistics</td>
-	<td></td>
-</tr>
-<tr class="even mouseover" <?php echo accessInfoTitle('admin'); ?>>
-	<td></td>
-	<td><?php echo $cfg['access_admin'] ? $check : $uncheck; ?>Admin</td>
-	<td></td>
-</tr>
-<?php /*
-	if ($cfg['username'] != $cfg['anonymous_user']) { ?>
-<tr class="header">
-	<td class="space"></td>
-	<td>Settings</td>
-	<td class="space"></td>
-</tr>
-<tr class="odd mouseover" title="Change current password">
-	<td></td>
-	<td><a href="todo"><img src="<?php echo $cfg['img']; ?>small_user.png" alt="" class="small space">Change password</a></td>
-	<td></td>
-</tr>
-<?php
-	}  */?>
-</table>
-<?php
-	require_once('include/footer.inc.php');
 }
 
 
@@ -583,33 +491,31 @@ function online() {
 	global $cfg, $db;
 	authenticate('access_admin');
 		
-	// Navigator
+	// formattedNavigator
 	$nav			= array();
 	$nav['name'][]	= 'Configuration';
 	$nav['url'][]	= 'config.php';
 	$nav['name'][]	= 'Online';
 	require_once('include/header.inc.php');	
 ?>
-<table class="border bottom_space">
+<table cellspacing="0" cellpadding="0" class="border">
 <tr class="header">
 	<td class="space"></td>
 	<td>User</td>
 	<td class="textspace"></td>
-	<td class="text-align-right">Visit</td>
+	<td align="right">Visit</td>
 	<td class="textspace"></td>
-	<td class="text-align-right">Hit</td>
+	<td align="right">Hit</td>
 	<td class="textspace"></td>
 	<td>IP</td>
-	<td class="textspace"></td>
-	<td>Country</td>
-	<td class="textspace"></td>
-	<td class="text-align-right">Idle</td>
+	<td align="right">Idle</td>
 	<td class="space"></td>
 </tr>
+<tr class="line"><td colspan="13"></td></tr>
 <?php
 	$i = 0;
 	$cfg['ip_tools'] = str_replace('&', '&amp;', $cfg['ip_tools']);
-	$query = mysqli_query($db, 'SELECT logged_in, hit_counter, visit_counter, idle_time, ip, user_agent,
+	$query = mysql_query('SELECT logged_in, hit_counter, visit_counter, idle_time, ip, user_agent,
 		user.username,
 		user.user_id
 		FROM session, user
@@ -617,7 +523,7 @@ function online() {
 		AND hit_counter > 0
 		AND session.user_id = user.user_id
 		ORDER BY idle_time DESC');
-	while ($session = mysqli_fetch_assoc($query)) {
+	while ($session = mysql_fetch_assoc($query)) {
 		$country_name = '';
 		// Get local network
 		$ip = array();
@@ -645,14 +551,14 @@ function online() {
 		foreach ($ip['name'] as $key => $value) {
 			if ($session_ip >= ip2long($ip['lower'][$key]) && $session_ip <= ip2long($ip['upper'][$key])) {
 				$country_name = $ip['name'][$key];
-				$flag = 'unknown';
+				$flag = $cfg['img'] . 'small_uncheck.png';
 				break;
 			}
 		}
 		
 		if (in_array($session['ip'], array('::1', '0:0:0:0:0:0:0:1'))) {
 			$country_name = 'Loopback';
-			$flag = 'unknown';
+			$flag = $cfg['img'] . 'small_uncheck.png';
 		}
 			
 		if ($country_name == '') {
@@ -665,46 +571,53 @@ function online() {
 			if ($code != $lookup) {
 				$code = explode('.', $code);
 				$code = 256 * (int) $code[2] + (int) $code[3];
-				$query3 = mysqli_query($db, 'SELECT iso, name FROM country WHERE code = ' . (int) $code);
-				$country = mysqli_fetch_assoc($query3);
-				$country_name = $country['name'];
-				$flag = $country['iso'];
+				$query3 = mysql_query('SELECT iso, name FROM country WHERE code = ' . (int) $code);
+				$country = mysql_fetch_assoc($query3);
+				if (is_file('skin/' . $cfg['skin'] . '/flag/' . $country['iso'] . '.png')) {
+					$country_name = $country['name'];
+					$flag = 'skin/' . rawurlencode($cfg['skin']) . '/flag/' . $country['iso'] . '.png';
+				}
 			}
 		}
 		
 		if ($country_name == '') {
 			$country_name = 'Unresolved / Unknown';
-			$flag = $cfg['img'] . 'unknown';
+			$flag = $cfg['img'] . 'small_uncheck.png';
 		}
 ?>
 <tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?> mouseover">
 	<td></td>
-	<td><a href="users.php?action=editUser&amp;user_id=<?php echo $session['user_id'];?>" title="<?php echo html($session['user_agent']); ?>"><img src="<?php echo $cfg['img']; ?>small_<?php echo ($session['logged_in']) ? 'login' : 'logout'; ?>.png" alt="" class="small space"><?php echo html($session['username']); ?></a></td>	
+	<td><a href="users.php?action=editUser&amp;user_id=<?php echo $session['user_id'];?>">
+	<i class="fa fa-sign-<?php echo ($session['logged_in']) ? 'in' : 'out'; ?> fa-fw icon-small"></i>	
+	<?php echo html($session['username']); ?></a>
+	<div><?php echo addslashes(html($session['user_agent'])); ?></div>
+	</td>	
 	<td></td>
-	<td class="text-align-right"><?php echo $session['visit_counter']; ?></td>	
+	<td align="right"><?php echo $session['visit_counter']; ?></td>	
 	<td></td>
-	<td class="text-align-right"><?php echo $session['hit_counter']; ?></td>
+	<td align="right"><?php echo $session['hit_counter']; ?></td>
 	<td></td>
-	<td><a href="<?php echo str_replace('%ip', rawurlencode($session['ip']), $cfg['ip_tools']); ?>"><?php echo html($session['ip']); ?></a></td>
-	<td></td>
-	<td><span class="flag <?php echo $flag; ?>"></span><?php echo html($country_name); ?></td>
-	<td></td>
-	<td class="text-align-right"><?php echo formattedTime((time() - $session['idle_time']) * 1000); ?></td>
+	<td><a href="<?php echo str_replace('%ip', rawurlencode($session['ip']), $cfg['ip_tools']); ?>" target="_blank"><?php echo html($session['ip']); ?></a></td>
+	<td align="right"><?php echo formattedTime((time() - $session['idle_time']) * 1000); ?></td>
 	<td></td>
 </tr>
 <?php
 	}
-	$query = mysqli_query($db, 'SELECT idle_time AS start_time FROM session WHERE logged_in ORDER BY idle_time ASC LIMIT 1');
-	$session = mysqli_fetch_assoc($query);
+	$query = mysql_query('SELECT idle_time AS start_time FROM session WHERE logged_in ORDER BY idle_time ASC LIMIT 1');
+	$session = mysql_fetch_assoc($query);
 ?>
+<tr class="line"><td colspan="13"></td></tr>
 <tr class="footer">
 	<td class="space"></td>
 	<td colspan="11">Visit and hit count since: <?php echo date($cfg['date_format'], $session['start_time']); ?></td>
 	<td class="space"></td>
 </tr>
 </table>
-<a href="users.php?action=online" class="button space">refresh</a><!--
---><a href="users.php?action=resetSessions&amp;sign=<?php echo $cfg['sign']; ?>" onclick="return confirm('Are you sure you want to reset all sessions?')" class="button">reset</a>
+<br>
+<div class="buttons">
+<span><a href="users.php?action=online">Refresh</a></span>
+<span><a onclick="return confirm('Are you sure you want to reset all sessions?')" href="users.php?action=resetSessions&amp;sign=<?php echo $cfg['sign']; ?>">Reset</a></span>
+</div>
 <?php
 	require_once('include/footer.inc.php');
 }
@@ -719,7 +632,126 @@ function resetSessions() {
 	global $db;
 	authenticate('access_admin', false, true, true);
 	
-	mysqli_query($db, 'TRUNCATE TABLE session');
+	mysql_query('TRUNCATE TABLE session');
+}
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Access right                                                           |
+//  +------------------------------------------------------------------------+
+function accessRight() {
+	global $cfg;
+	authenticate('access_logged_in');
+	
+	// formattedNavigator
+	$nav			= array();
+	$nav['name'][]	= 'Configuration';
+	$nav['url'][]	= 'config.php';
+	$nav['name'][]	= 'Access right';
+	$nav['url'][]	= '';
+	require_once('include/header.inc.php');
+	
+	$check = '<img src="' . $cfg['img'] . 'small_check.png" alt="" class="small">';
+	$uncheck = '<img src="' . $cfg['img'] . 'small_uncheck.png" alt="" class="small">';
+?>
+<table cellspacing="0" cellpadding="0" class="border">
+<tr class="header">
+	<td class="space"></td>
+	<td colspan="3"><?php echo html($cfg['username']); ?></td>
+	<td class="space"></td>
+</tr>
+<tr class="line"><td colspan="5"></td></tr>
+<tr class="odd" <?php echo onmouseoverAccessInfo('media'); ?>>
+	<td></td>
+	<td>Media</td>
+	<td class="textspace"></td>	
+	<td align="right"><?php echo $cfg['access_media'] ? $check : $uncheck; ?></td>
+	<td></td>
+</tr>
+<tr class="even" <?php echo onmouseoverAccessInfo('popular'); ?>>
+	<td></td>
+	<td>Popular</td>
+	<td class="textspace"></td>	
+	<td align="right"><?php echo $cfg['access_popular'] ? $check : $uncheck; ?></td>
+	<td></td>
+</tr>
+<tr class="odd" <?php echo onmouseoverAccessInfo('favorite'); ?>>
+	<td></td>
+	<td>Favorite</td>
+	<td></td>
+	<td align="right"><?php echo $cfg['access_favorite'] ? $check : $uncheck; ?></td>
+	<td></td>
+</tr>
+<tr class="even" <?php echo onmouseoverAccessInfo('playlist'); ?>>
+	<td></td>
+	<td>Playlist</td>
+	<td></td>
+	<td align="right"><?php echo $cfg['access_playlist'] ? $check : $uncheck; ?></td>
+	<td></td>
+</tr>
+<tr class="odd" <?php echo onmouseoverAccessInfo('play'); ?>>
+	<td></td>
+	<td>Play</td>
+	<td></td>
+	<td align="right"><?php echo $cfg['access_play'] ? $check : $uncheck; ?></td>
+	<td></td>
+</tr>
+<tr class="even" <?php echo onmouseoverAccessInfo('add'); ?>>
+	<td></td>
+	<td>Add</td>
+	<td></td>
+	<td align="right"><?php echo $cfg['access_add'] ? $check : $uncheck; ?></td>
+	<td></td>
+</tr>
+<tr class="odd" <?php echo onmouseoverAccessInfo('stream'); ?>>
+	<td></td>
+	<td>Stream</td>
+	<td></td>
+	<td align="right"><?php echo $cfg['access_stream'] ? $check : $uncheck; ?></td>
+	<td></td>
+</tr>
+<tr class="even" <?php echo onmouseoverAccessInfo('download'); ?>>
+	<td></td>
+	<td>Download</td>
+	<td></td>
+	<td align="right"><?php echo $cfg['access_download'] ? $check : $uncheck; ?></td>
+	<td></td>
+</tr>
+<!--
+<tr class="odd" <?php echo onmouseoverAccessInfo('cover'); ?>>
+	<td></td>
+	<td>Cover</td>
+	<td></td>
+	<td align="right"><?php echo $cfg['access_cover'] ? $check : $uncheck; ?></td>
+	<td></td>
+</tr>
+<tr class="even" <?php echo onmouseoverAccessInfo('record'); ?>>
+	<td></td>
+	<td>Record</td>
+	<td></td>
+	<td align="right"><?php echo $cfg['access_record'] ? $check : $uncheck; ?></td>
+	<td></td>
+</tr>
+-->
+<tr class="even" <?php echo onmouseoverAccessInfo('statistics'); ?>>
+	<td></td>
+	<td>Statistics</td>
+	<td></td>
+	<td align="right"><?php echo $cfg['access_statistics'] ? $check : $uncheck; ?></td>
+	<td></td>
+</tr>
+<tr class="odd" <?php echo onmouseoverAccessInfo('admin'); ?>>
+	<td></td>
+	<td>Admin</td>
+	<td></td>
+	<td align="right"><?php echo $cfg['access_admin'] ? $check : $uncheck; ?></td>
+	<td></td>
+</tr>
+</table>
+<?php
+	require_once('include/footer.inc.php');
 }
 
 
@@ -731,96 +763,108 @@ function resetSessions() {
 function userStatistics() {
 	global $cfg, $db;
 	authenticate('access_admin');
+	//authenticate('access_statistics');
+	$period = get('period');
 	
-	$period = @$_GET['period'];
-	
-	if		($period == 'week')		$timestamp = time() - 86400 * 7;
-	elseif	($period == 'month')	$timestamp = time() - 86400 * 31;
-	elseif	($period == 'year')		$timestamp = time() - 86400 * 365;
-	elseif	($period == 'overall')	$timestamp = 0;
+	if		($period == 'week')		$days = 7;
+	elseif	($period == 'month')	$days = 31;
+	elseif	($period == 'year')		$days = 365;
+	elseif	($period == 'overall')	$days = 365 * 1000;
 	else							message(__FILE__, __LINE__, 'error', '[b]Unsupported input value for[/b][br]period');
 	
-	// Navigator
+	// formattedNavigator
 	$nav			= array();
 	$nav['name'][]	= 'Configuration';
 	$nav['url'][]	= 'config.php';
 	$nav['name'][]	= 'User statistics';
 	require_once('include/header.inc.php');
 ?>
-<table class="bottom_space"><tr><td><!-- table tab wrapper -->
-<ul id="tab">
-	<li class="tab <?php echo ($period == 'week') ? 'on' : 'off'; ?>" onclick="location.href='users.php?action=userStatistics&amp;period=week';">Week</li>
-	<li class="tab <?php echo ($period == 'month') ? 'on' : 'off'; ?>" onclick="location.href='users.php?action=userStatistics&amp;period=month';">Month</li>
-	<li class="tab <?php echo ($period == 'year') ? 'on' : 'off'; ?>" onclick="location.href='users.php?action=userStatistics&amp;period=year';">Year</li>
-	<li class="tab <?php echo ($period == 'overall') ? 'on' : 'off'; ?>" onclick="location.href='users.php?action=userStatistics&amp;period=overall';">Overall</li>
-</ul>
-<table class="tab">
-<tr class="header">
+<table cellspacing="0" cellpadding="0" class="tab">
+<tr>
+	<td>
+<!--  -->
+<table cellspacing="0" cellpadding="0" class="tab">
+<tr>
+	<td class="<?php echo ($period == 'week') ? 'tab_on' : 'tab_off'; ?>" onClick="location.href='users.php?action=userStatistics&amp;period=week';">Week</td>
+	<td class="tab_none tabspace"></td>
+	<td class="<?php echo ($period == 'month') ? 'tab_on' : 'tab_off'; ?>" onClick="location.href='users.php?action=userStatistics&amp;period=month';">Month</td>
+	<td class="tab_none tabspace"></td>
+	<td class="<?php echo ($period == 'year') ? 'tab_on' : 'tab_off'; ?>" onClick="location.href='users.php?action=userStatistics&amp;period=year';">Year</td>
+	<td class="tab_none tabspace"></td>
+	<td class="<?php echo ($period == 'overall') ? 'tab_on' : 'tab_off'; ?>" onClick="location.href='users.php?action=userStatistics&amp;period=overall';">Overall</td>
+	<td class="tab_none"></td>
+</tr>
+</table>
+<table cellspacing="0" cellpadding="0" class="tab_border">
+<tr class="tab_header">
 	<td class="space"></td>
-	<td>Username</td>
-	<td class="textspace"></td>
+	<td id="header_user_name">&nbsp;Username</td>
 	<td class="matrix">Play</td>
 	<td class="matrix">Stream</td>
 	<td class="matrix">Download</td>
 	<td class="matrix">Cover</td>
-	<td class="matrix">Record</td>
-	<td class="space"></td>
+	<td> </td>
 </tr>
+<tr class="line"><td colspan="7"></td></tr>
 <?php
 	$i= 0;
-	$query = mysqli_query($db, 'SELECT username, access_play, access_add, access_stream, access_download, access_cover, access_record, user_id FROM user ORDER BY username');
-	while ($user = mysqli_fetch_assoc($query)) {
+	$query = mysql_query('SELECT username, access_play, access_add, access_stream, access_download, access_cover, access_record, user_id FROM user ORDER BY username');
+	while ($user = mysql_fetch_assoc($query)) {
 		$n[0] = $n[1] = $n[2] = $n[3] = $n[4] = 0;
-		$query2 = mysqli_query($db, 'SELECT
+		$query2 = mysql_query('SELECT
 			flag,
 			COUNT(*) AS counter 
 			FROM counter 
 			WHERE user_id = "' . (int) $user['user_id'] . '" 
-			AND time > ' . (int) $timestamp . '
+			AND time > ' . (int) (time() - 86400 * $days) . '
 			GROUP BY flag');
-		while ($album = mysqli_fetch_assoc($query2)) {
+		while ($album = mysql_fetch_assoc($query2)) {
 			$n[ $album['flag'] ] = $album['counter'];
 		}
 ?>
 <tr class="<?php if ($cfg['username'] == $user['username']) echo 'select'; else echo ($i & 1) ? 'even mouseover' : 'odd mouseover'; $i++ ?>">
 	<td ></td>
-	<td class="nowrap"><a href="users.php?action=editUser&amp;user_id=<?php echo $user['user_id']; ?>"><img src="<?php echo $cfg['img']; ?>small_user.png" alt="" class="small space"><?php echo html($user['username']); ?></a></td>
-	<td></td>
+	<td class="nowrap"><a href="users.php?action=editUser&amp;user_id=<?php echo $user['user_id']; ?>">&nbsp;<i class="fa fa-user fa-fw icon-small"></i><?php echo html($user['username']); ?></a></td>
 	<td class="matrix"><?php echo ($user['access_play'] || $user['access_add'])	? '<a href="index.php?action=viewPopular&amp;flag=0&amp;period=' . $period . '&amp;user_id=' . $user['user_id'] . '">' . $n[0] . '</a>' : '<img src="' . $cfg['img'] . 'small_uncheck.png" alt="" class="small">'; ?></td>
 	<td class="matrix"><?php echo ($user['access_stream'])						? '<a href="index.php?action=viewPopular&amp;flag=1&amp;period=' . $period . '&amp;user_id=' . $user['user_id'] . '">' . $n[1] . '</a>' : '<img src="' . $cfg['img'] . 'small_uncheck.png" alt="" class="small">'; ?></td>
 	<td class="matrix"><?php echo ($user['access_download'])					? '<a href="index.php?action=viewPopular&amp;flag=2&amp;period=' . $period . '&amp;user_id=' . $user['user_id'] . '">' . $n[2] . '</a>' : '<img src="' . $cfg['img'] . 'small_uncheck.png" alt="" class="small">'; ?></td>
 	<td class="matrix"><?php echo ($user['access_cover'])						? '<a href="index.php?action=viewPopular&amp;flag=3&amp;period=' . $period . '&amp;user_id=' . $user['user_id'] . '">' . $n[3] . '</a>' : '<img src="' . $cfg['img'] . 'small_uncheck.png" alt="" class="small">'; ?></td>
-	<td class="matrix"><?php echo ($user['access_record'])						? '<a href="index.php?action=viewPopular&amp;flag=4&amp;period=' . $period . '&amp;user_id=' . $user['user_id'] . '">' . $n[4] . '</a>' : '<img src="' . $cfg['img'] . 'small_uncheck.png" alt="" class="small">'; ?></td>
 	<td></td>
 </tr>
 <?php
 	}
 	$n[0] = $n[1] = $n[2] = $n[3] = $n[4] = 0;
-	$query = mysqli_query($db, 'SELECT
+	$query = mysql_query('SELECT
 		flag,
 		COUNT(*) AS counter 
 		FROM counter 
-		WHERE time > ' . (int) $timestamp . '
+		WHERE time > ' . (int) (time() - 86400 * $days) . '
 		GROUP BY flag');
-	while ($album = mysqli_fetch_assoc($query)) {
+	while ($album = mysql_fetch_assoc($query)) {
 		$n[ $album['flag'] ] = $album['counter'];
 	}
 ?>
+<tr class="line"><td colspan="9"></td></tr>
 <tr class="footer">
 	<td></td>
-	<td><img src="<?php echo $cfg['img']; ?>small_users.png" alt="" class="small space">All users</td>
-	<td></td>
+	<td>&nbsp;<i class="fa fa-users fa-fw icon-small"></i>All users</td>
 	<td class="matrix"><?php echo $n[NJB_COUNTER_PLAY]; ?></td>
 	<td class="matrix"><?php echo $n[NJB_COUNTER_STREAM]; ?></td>
 	<td class="matrix"><?php echo $n[NJB_COUNTER_DOWNLOAD]; ?></td>
 	<td class="matrix"><?php echo $n[NJB_COUNTER_COVER]; ?></td>
-	<td class="matrix"><?php echo $n[NJB_COUNTER_RECORD]; ?></td>
 	<td></td>
 </tr>
 </table>
-</td></tr></table><!-- table tab wrapper -->
-<a href="users.php?action=userStatistics&amp;period=<?php echo $period; ?>" class="button space">refresh</a><!--
---><a href="users.php?action=resetUserStatistics&amp;period=<?php echo $period; ?>&amp;sign=<?php echo $cfg['sign']; ?>" onclick="return confirm('Are you sure you want to reset all user statistics?')" class="button">reset</a>
+<!--  -->
+	</td>
+</tr>
+</table>
+<br>
+<div class="buttons">
+<span><a href="users.php?action=userStatistics&amp;period=<?php echo $period; ?>">Refresh</a></span>
+<span><a href="users.php?action=resetUserStatistics&amp;period=<?php echo $period; ?>&amp;sign=<?php echo $cfg['sign']; ?>" onClick="return confirm('Are you sure you want to reset all user statistics?')">Reset</a></span>
+</div>
+
 <?php
 	require_once('include/footer.inc.php');
 }
@@ -835,5 +879,6 @@ function resetUserStatistics() {
 	global $db;
 	authenticate('access_admin', false, true, true);
 	
-	mysqli_query($db, 'TRUNCATE TABLE counter');
+	mysql_query('TRUNCATE TABLE counter');
 }
+?>

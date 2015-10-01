@@ -1,6 +1,10 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright � 2001-2015 Willem Bartels                       |
+//  | O!MPD, Copyright © 2015 Artur Sierzant		                         |
+//  | http://www.ompd.pl                                             		 |
+//  |                                                                        |
+//  |                                                                        |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -23,15 +27,15 @@
 
 
 //  +------------------------------------------------------------------------+
-//  | MySQLi configuration                                                   |
+//  | MySQL configuration                                                    |
 //  +------------------------------------------------------------------------+
-$cfg['mysqli_host']                 = '127.0.0.1';
-$cfg['mysqli_db']                   = 'netjukebox';
-$cfg['mysqli_user']                 = 'root';
-$cfg['mysqli_password']             = '';
-$cfg['mysqli_port']                 = '3306';
-$cfg['mysqli_socket']               = '';
-$cfg['mysqli_auto_create_db']       = true;
+$cfg['mysql_host']                 = '127.0.0.1';
+$cfg['mysql_db']                   = 'ompd';
+$cfg['mysql_user']                 = 'root';
+$cfg['mysql_password']             = '';
+$cfg['mysql_port']                 = '3306';
+$cfg['mysql_socket']               = '';
+$cfg['mysql_auto_create_db']       = true;
 
 
 
@@ -41,10 +45,157 @@ $cfg['mysqli_auto_create_db']       = true;
 //  +------------------------------------------------------------------------+
 //  | Use a UNIX style directory scheme with a trailing slash.               |
 //  |                                                                        |
+//  | Windows:        'D:/Media/';                                           |
 //  | Linux/Unix/OSX: '/var/mpd/music/';                                     |
-//  | Windows:        'D:/Music/';                                           |
 //  +------------------------------------------------------------------------+
-$cfg['media_dir']                   = '/data/Music/';
+$cfg['media_dir']                   = '/share/HDA_DATA/ompd/';
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Source of artist/album title/track title								 |
+//  +------------------------------------------------------------------------+
+//  | 'tags' - data from tags in file								         |
+//  | Others values are not allowed now - don't change this setting or update|
+//  | of library will crash. This if for future use.						 | 
+//  +------------------------------------------------------------------------+
+$cfg['name_source']					= 'tags';
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Songs separators												         |
+//  +------------------------------------------------------------------------+
+//  | Separators in song title for search for another versions of song       |
+//  +------------------------------------------------------------------------+
+$cfg['separator'][] = 	" (";
+$cfg['separator'][] = 	" [";
+$cfg['separator'][] = 	" {";
+$cfg['separator'][] = 	"(";
+$cfg['separator'][] = 	"[";
+$cfg['separator'][] = 	"{";
+$cfg['separator'][] = 	"/";
+$cfg['separator'][] = 	" /";
+$cfg['separator'][] = 	"\\";
+$cfg['separator'][] = 	" \\";
+$cfg['separator'][] = 	"-";
+$cfg['separator'][] = 	" -";
+$cfg['separator'][] = 	", part";
+$cfg['separator'][] = 	", pt";
+$cfg['separator'][] = 	", vol";
+$cfg['separator'][] = 	" part";
+$cfg['separator'][] = 	" pt";
+$cfg['separator'][] = 	" vol";
+$cfg['separator'][] = 	", część ";
+$cfg['separator'][] = 	" część ";
+$cfg['separator'][] = 	" '";
+$cfg['separator'][] = 	"?";
+$cfg['separator'][] = 	"!";
+$cfg['separator'][] = 	":";
+$cfg['separator'][] = 	" 1";
+$cfg['separator'][] = 	" 2";
+$cfg['separator'][] = 	" 3";
+$cfg['separator'][] = 	" 4";
+$cfg['separator'][] = 	" 5";
+$cfg['separator'][] = 	" II";
+$cfg['separator'][] = 	" III";
+$cfg['separator'][] = 	" IV";
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Tag separator													         |
+//  +------------------------------------------------------------------------+
+//  | Separator in comment splitting comment into tags						 |
+//  +------------------------------------------------------------------------+
+$cfg['tags_separator'] = 	";";
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Multiple artists												         |
+//  +------------------------------------------------------------------------+
+//  | Separator for multiple artist (works like 'ft.', 'feat.', etc)         |
+//  +------------------------------------------------------------------------+
+$cfg['artist_separator'][] = 	" i ";
+$cfg['artist_separator'][] = 	"; ";
+$cfg['artist_separator'][] = 	" & ";
+$cfg['artist_separator'][] = 	" and ";
+$cfg['artist_separator'][] = 	" with ";
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Quick search 													         |
+//  +------------------------------------------------------------------------+
+$cfg['quick_search'][1] = array("Polish Artists","comment LIKE '%polish%'");
+$cfg['quick_search'][2] = array("Female voices","comment LIKE '%ladies%'");
+$cfg['quick_search'][3] = array("Live Concerts","comment LIKE '%live%'");
+$cfg['quick_search'][4] = array("High Audio Quality","comment LIKE '%hda%' or comment LIKE '%cd%'");
+$cfg['quick_search'][5] = array("HD Audio","audio_bits_per_sample > 16 OR audio_sample_rate > 48000");
+$cfg['quick_search'][6] = array("Japanese Editions","album LIKE '%japan%' OR comment LIKE '%SHM-CD%'");
+$cfg['quick_search'][7] = array("Pop of the 80's","genre ='Pop' and (album.year BETWEEN 1980 AND 1989)");
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Default Favorites 					 								 |
+//  +------------------------------------------------------------------------+
+//  | Name and Description for playlist with tracks marked with star		 |
+//  +------------------------------------------------------------------------+
+$cfg['favorite_name'] = 'Favorites';
+$cfg['favorite_comment'] = 'My favorites tracks';
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Lyrics search string 					 								 |
+//  +------------------------------------------------------------------------+
+//  | Additional query added to Google search string: 						 |
+//  | https://www.google.com/search?q={track artist}+{title}+{string below}  |
+//  | example: 																 |
+//  | https://www.google.com/search?q=Duran+Duran+Big+Thing+lyrics+site:.pl  |
+//  +------------------------------------------------------------------------+
+$cfg['lyrics_search'] = 'lyrics';
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Misc artists folder							                         |
+//  +------------------------------------------------------------------------+
+//  | Name of folder with misc tracks of misc artists                        |
+//  +------------------------------------------------------------------------+
+$cfg['misc_tracks_misc_artists_folder']	= 'Various Tracks';
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Misc tracks folder							                         |
+//  +------------------------------------------------------------------------+
+//  | Name of folder with misc tracks of one artist (must be different then  |
+//  | above).																 |
+//  +------------------------------------------------------------------------+
+$cfg['misc_tracks_folder']				= 'Various Tracks of ';
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Pagination settings					                                 |
+//  +------------------------------------------------------------------------+
+//  | Number of albums displayed per page 	                                 |
+//  +------------------------------------------------------------------------+
+
+$cfg['max_items_per_page']				= 63; 
 
 
 
@@ -55,18 +206,21 @@ $cfg['media_dir']                   = '/data/Music/';
 //  | Use the native directory scheme with a trailing slash or backslash.    |
 //  | ESCAPE THE LAST BACKSLASH WITH A BACKSLASH OR USE DOUBLE QUOTES!       |
 //  |                                                                        |
-//  | Linux/Unix:     '/usr/bin/';                                           |
-//  | OSX (MacPorts): '/opt/local/bin/';                                     |
 //  | Windows:        'D:\Codec\\';                                          |
+//  | Linux/Unix/OSX: '/usr/bin/';                                           |
+//  |                 '/usr/local/bin/';                                     |
+//  |                 '/opt/bin/';                                           |
+//  |                 '/opt/local/bin/';                                     |
 //  |                                                                        |
 //  | BE AWARE THAT START CAN SUPPRESS ERROR MESSAGES ON SOME SETUPS!        |
 //  | The process priority can be set with start or nice depending on the    |
 //  | operating system:                                                      |
 //  |                                                                        |
-//  | Linux/Unix/OSX: 'nice -n 19 ...';                                      |
 //  | Windows:        'start /b /low ...';                                   |
+//  | Linux/Unix/OSX: 'nice -n 20 ...';                                      |
 //  +------------------------------------------------------------------------+
-$cfg['bin_dir']                     = 'nice -n 19 /usr/bin/';
+//$cfg['bin_dir']                     = 'nice -n 20 /usr/bin/';
+$cfg['bin_dir']                     = '/opt/bin/';
 
 
 
@@ -76,14 +230,14 @@ $cfg['bin_dir']                     = 'nice -n 19 /usr/bin/';
 //  +------------------------------------------------------------------------+
 //  | Use a UNIX style directory scheme with a trailing slash.               |
 //  |                                                                        |
-//  | Linux/Unix:     '/mnt/MUSIC/';                                         |
-//  | OSX:            '/Volumes/MP3 PLAYER/MUSIC/';                          |
 //  | Windows:        'G:/MUSIC/';                                           |
+//  | OSX:            '/Volumes/MP3 PLAYER/MUSIC/';                          |
+//  | Linux/Unix:     '/mnt/MUSIC/';                                         |
 //  |                                                                        |
 //  | External storage features are only visible in netjukebox when the      |
 //  | web server has access to the path set in $cfg['external_storage']      |
 //  +------------------------------------------------------------------------+
-$cfg['external_storage']            = '/data/Mobile/Music/';
+$cfg['external_storage']            = '/share/Usb/';
 
 
 
@@ -105,20 +259,7 @@ $cfg['media_extension'][]           = 'wma';
 $cfg['media_extension'][]           = 'ape';
 $cfg['media_extension'][]           = 'flac';
 $cfg['media_extension'][]           = 'wv';
-// Video
-$cfg['media_extension'][]           = 'asf';
-$cfg['media_extension'][]           = 'avi';
-$cfg['media_extension'][]           = 'm4v';
-$cfg['media_extension'][]           = 'mp4';
-$cfg['media_extension'][]           = 'mkv';
-$cfg['media_extension'][]           = 'mpeg';
-$cfg['media_extension'][]           = 'mpg';
-$cfg['media_extension'][]           = 'nsv';
-$cfg['media_extension'][]           = 'ra';
-$cfg['media_extension'][]           = 'ram';
-$cfg['media_extension'][]           = 'swf';
-$cfg['media_extension'][]           = 'ts';
-$cfg['media_extension'][]           = 'wmv';
+$cfg['media_extension'][]           = 'wav';
 
 
 
@@ -174,6 +315,7 @@ $cfg['encode_mime_type'][]          = 'audio/mpeg';
 $cfg['encode_extension'][]          = 'mp3';
 $cfg['encode_stdout'][]             = $cfg['bin_dir'] . 'lame -V2 --quiet --noreplaygain - -';
 $cfg['encode_file'][]               = $cfg['bin_dir'] . 'lame -V2 --quiet --replaygain-accurate - %destination';
+$cfg['encode_file'][]               = $cfg['bin_dir'] . 'lame -V2 --quiet --replaygain-accurate - %destination';
 $cfg['encode_bitrate'][]            = 190000;
 $cfg['encode_vbr'][] 	            = true;
 $cfg['tag_format'][]                = 'id3v2.3';
@@ -184,44 +326,18 @@ $cfg['tag_padding'][]               = 25600;
 
 
 //  +------------------------------------------------------------------------+
-//  | Download album with 7-Zip or zip                                       |
+//  | Download album (with 7-Zip)                                            |
 //  +------------------------------------------------------------------------+
+//  | netjukebox always encodes the list file in UTF-8                       |
+//  | The command -scsutf-8 is not working on all operating systems! This    |
+//  | shouldn't be a problem because 7-Zip by default uses UTF-8 encoding    |
+//  | for the list file.                                                     |
+//  |                                                                        |
 //  | http://www.7-zip.org                                                   |
-//  |                                                                        |
-//  | 7za uses the LANG envirement variabale. Normaly this is only set when  |
-//  | PHP is running in CLI mode.                                            |
-//  +------------------------------------------------------------------------+
-//  | http://www.info-zip.org/                                               |
-//  |                                                                        |
-//  | For zip the LANG envirement variabale is not needed. And can be set to |
-//  | an empty string. On Windows you can replace the Linux cat command with |
-//  | type (untested).                                                       |
 //  +------------------------------------------------------------------------+
 $cfg['download_album_mime_type']	= 'application/zip';
-$cfg['download_album_env_lang']     = 'en_US.UTF-8';
 $cfg['download_album_extension']    = 'zip';
 $cfg['download_album_cmd']          = $cfg['bin_dir'] . '7za a -tzip -mx0 -- %destination @%list';
-
-/*
-$cfg['download_album_mime_type']	= 'application/zip';
-$cfg['download_album_env_lang']     = '';
-$cfg['download_album_extension']    = 'zip';
-$cfg['download_album_cmd']          = 'cat %list | ' . $cfg['bin_dir'] . 'zip -0 --junk-paths %destination -@';
-*/
-
-
-
-
-//  +------------------------------------------------------------------------+
-//  | Record (with CDRDAO)                                                   |
-//  +------------------------------------------------------------------------+
-//  | Use "cdrdao scanbus" from the cli to see a list with cdrom devices.    |
-//  | Set the disired device with --device x,x,x in $cfg['record']           |
-//  |                                                                        |
-//  | http://sourceforge.net/projects/cdrdao/                                |
-//  +------------------------------------------------------------------------+
-$cfg['record']                      = $cfg['bin_dir'] . 'cdrdao write --device 1,1,0 --driver generic-mmc --eject --force -n %tocfile';
-$cfg['record_cdtext']               = false;
 
 
 
@@ -246,11 +362,7 @@ $cfg['cache_expire_zip']            = 14400; // 3600 * 4
 //  | Album features                                                         |
 //  +------------------------------------------------------------------------+
 $cfg['album_download']              = true;
-$cfg['album_share_stream']          = true;
-$cfg['album_share_download']        = true;
-$cfg['album_copy']                  = true;
-$cfg['album_update_image']          = true;
-$cfg['album_edit_genre']            = true;
+$cfg['album_copy']                  = true; //available when $cfg['external_storage'] points existing directory
 
 
 
@@ -273,7 +385,7 @@ $cfg['album_edit_genre']            = true;
 $cfg['image_read_embedded']         = true;
 $cfg['image_share']                 = true;
 $cfg['image_share_mode']            = 'played';
-$cfg['image_front']                 = 'cd_front'; // .jpg and .png
+$cfg['image_front']                 = 'folder'; // .jpg and .png
 $cfg['image_back']                  = 'cd_back';  // .jpg and .png
 $cfg['image_front_cover_treshold']  = 90000;      // 300 * 300
 
@@ -284,6 +396,7 @@ $cfg['image_front_cover_treshold']  = 90000;      // 300 * 300
 //  | No album artist                                                        |
 //  +------------------------------------------------------------------------+
 $cfg['no_album_artist'][]           = 'compilation';
+$cfg['no_album_artist'][]           = 'radio';
 $cfg['no_album_artist'][]           = 'remix';
 $cfg['no_album_artist'][]           = 'sampler';
 $cfg['no_album_artist'][]           = 'singles';
@@ -302,12 +415,28 @@ $cfg['search_url_combined'][]       = '';
 $cfg['search_method'][]             = 'get';
 $cfg['search_charset'][]            = 'UTF-8';
 
-$cfg['search_name'][]               = 'Google';
-$cfg['search_url_artist'][]         = 'https://www.google.com/search?q=%artist';
-$cfg['search_url_album'][]          = 'https://www.google.com/search?q=%album';
-$cfg['search_url_combined'][]       = 'https://www.google.com/search?q=%artist+%album';
+
+$cfg['search_name'][]               = 'Discogs';
+$cfg['search_url_artist'][]         = 'http://www.discogs.com/search/?q=%artist';
+$cfg['search_url_album'][]          = 'http://www.discogs.com/search/?q=%album';
+$cfg['search_url_combined'][]       = 'http://www.discogs.com/search/?q=%artist+%album';
 $cfg['search_method'][]             = 'get';
 $cfg['search_charset'][]            = 'UTF-8';
+
+$cfg['search_name'][]               = 'Google';
+$cfg['search_url_artist'][]         = 'http://www.google.com/search?q=%artist';
+$cfg['search_url_album'][]          = 'http://www.google.com/search?q=%album';
+$cfg['search_url_combined'][]       = 'http://www.google.com/search?q=%artist+%album';
+$cfg['search_method'][]             = 'get';
+$cfg['search_charset'][]            = 'UTF-8';
+
+$cfg['search_name'][]               = 'Wikipedia';
+$cfg['search_url_artist'][]         = 'http://www.google.com/search?q=%artist+site%3Awikipedia.org';
+$cfg['search_url_album'][]          = 'http://www.google.com/search?q=%album+site%3Awikipedia.org';
+$cfg['search_url_combined'][]       = 'http://www.google.com/search?q=%artist+%album+site%3Awikipedia.org';
+$cfg['search_method'][]             = 'get';
+$cfg['search_charset'][]            = 'UTF-8';
+
 
 $cfg['search_name'][]               = 'Last.fm';
 $cfg['search_url_artist'][]         = 'http://www.last.fm/search?m=artists&q=%artist';
@@ -316,23 +445,10 @@ $cfg['search_url_combined'][]       = '';
 $cfg['search_method'][]             = 'get';
 $cfg['search_charset'][]            = 'UTF-8';
 
-$cfg['search_name'][]               = 'MuziekWeb';
-$cfg['search_url_artist'][]         = 'https://www.muziekweb.nl/MuziekWeb/Cat/Popular/Search.php?Artist=%artist';
-$cfg['search_url_album'][]          = 'https://www.muziekweb.nl/MuziekWeb/Cat/Popular/Search.php?Album=%album';
-$cfg['search_url_combined'][]       = 'https://www.muziekweb.nl/MuziekWeb/Cat/Popular/Search.php?Artist=%artist&Album=%album';
-$cfg['search_method'][]             = 'get';
-$cfg['search_charset'][]            = 'UTF-8';
-
+ 
 $cfg['search_name'][]               = 'Rate your music';
-$cfg['search_url_artist'][]         = 'https://rateyourmusic.com/search?type=a&searchterm=%artist';
-$cfg['search_url_album'][]          = 'https://rateyourmusic.com/search?type=l&searchterm=%album';
-$cfg['search_url_combined'][]       = '';
-$cfg['search_method'][]             = 'get';
-$cfg['search_charset'][]            = 'UTF-8';
-
-$cfg['search_name'][]               = 'Sputnikmusic';
-$cfg['search_url_artist'][]         = 'http://www.sputnikmusic.com/search_results.php?search_in=Bands&search_text=%artist';
-$cfg['search_url_album'][]          = 'http://www.sputnikmusic.com/search_results.php?search_in=Albums&search_text=%album';
+$cfg['search_url_artist'][]         = 'http://rateyourmusic.com/search?type=a&searchterm=%artist';
+$cfg['search_url_album'][]          = 'http://rateyourmusic.com/search?type=l&searchterm=%album';
 $cfg['search_url_combined'][]       = '';
 $cfg['search_method'][]             = 'get';
 $cfg['search_charset'][]            = 'UTF-8';
@@ -350,8 +466,6 @@ $cfg['search_charset'][]            = 'UTF-8';
 //  | For the Last.fm web services a "API key" is needed. Get this key free  |
 //  | from:  http://www.last.fm/api/account                                  |
 //  +------------------------------------------------------------------------+
-$cfg['image_service_user_agent']	= 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:31.0) Gecko/20100101 Firefox/31.0';  // When empty use client user agent
-
 /*
 $cfg['image_AWSAccessKeyId']	    = '';
 $cfg['image_AWSSecretAccessKey']    = '';
@@ -359,44 +473,44 @@ $cfg['image_AWSAssociateTag']       = 'free-usage-tier';
 
 $cfg['image_service_name'][]        = 'Amazon';
 $cfg['image_service_charset'][]     = 'UTF-8';
-$cfg['image_service_url'][]         = 'https://ecs.amazonaws.com/onca/xml?Service=AWSECommerceService&AWSAccessKeyId=%awsaccesskeyid&AssociateTag=%associatetag&Operation=ItemSearch&ResponseGroup=Images&SearchIndex=Music&Type=Lite&Artist=%artist&Title=%album&Timestamp=%timestamp';
+$cfg['image_service_url'][]         = 'http://ecs.amazonaws.com/onca/xml?Service=AWSECommerceService&AWSAccessKeyId=%awsaccesskeyid&AssociateTag=%associatetag&Operation=ItemSearch&ResponseGroup=Images&SearchIndex=Music&Type=Lite&Artist=%artist&Title=%album&Timestamp=%timestamp';
 $cfg['image_service_process'][]     = 'amazon';
-$cfg['image_service_urldecode'][]   = null;
+$cfg['image_service_urldecode'][]   =  null;
 
 $cfg['image_service_name'][]        = 'Amazon (uk)';
 $cfg['image_service_charset'][]     = 'UTF-8';
-$cfg['image_service_url'][]         = 'https://ecs.amazonaws.co.uk/onca/xml?Service=AWSECommerceService&AWSAccessKeyId=%awsaccesskeyid&AssociateTag=%associatetag&Operation=ItemSearch&ResponseGroup=Images&SearchIndex=Music&Type=Lite&Artist=%artist&Title=%album&Timestamp=%timestamp';
+$cfg['image_service_url'][]         = 'http://ecs.amazonaws.co.uk/onca/xml?Service=AWSECommerceService&AWSAccessKeyId=%awsaccesskeyid&AssociateTag=%associatetag&Operation=ItemSearch&ResponseGroup=Images&SearchIndex=Music&Type=Lite&Artist=%artist&Title=%album&Timestamp=%timestamp';
 $cfg['image_service_process'][]     = 'amazon';
 $cfg['image_service_urldecode'][]   = null;
 
 $cfg['image_service_name'][]        = 'Amazon (de)';
 $cfg['image_service_charset'][]     = 'UTF-8';
-$cfg['image_service_url'][]         = 'https://ecs.amazonaws.de/onca/xml?Service=AWSECommerceService&AWSAccessKeyId=%awsaccesskeyid&AssociateTag=%associatetag&Operation=ItemSearch&ResponseGroup=Images&SearchIndex=Music&Type=Lite&Artist=%artist&Title=%album&Timestamp=%timestamp';
+$cfg['image_service_url'][]         = 'http://ecs.amazonaws.de/onca/xml?Service=AWSECommerceService&AWSAccessKeyId=%awsaccesskeyid&AssociateTag=%associatetag&Operation=ItemSearch&ResponseGroup=Images&SearchIndex=Music&Type=Lite&Artist=%artist&Title=%album&Timestamp=%timestamp';
 $cfg['image_service_process'][]     = 'amazon';
 $cfg['image_service_urldecode'][]   = null;
 */
 
 $cfg['image_service_name'][]        = 'Slothradio';
 $cfg['image_service_charset'][]     = 'UTF-8';
-$cfg['image_service_url'][]         = 'http://covers.slothradio.com/?adv=1&artist=%artist&album=%album&genre=p&imgsize=x&locale=us&sort=salesrank';
+$cfg['image_service_url'][]         = 'http://www.slothradio.com/covers/?adv=1&artist=%artist&album=%album&genre=p&imgsize=x&locale=us&sort=salesrank';
 $cfg['image_service_process'][]     = '#<!-- RESULT ITEM START -->.+?><img src="(http://.+?)" width="([0-9]+?)" height="([0-9]+?)"#s';
 $cfg['image_service_urldecode'][]   = false;
 
 $cfg['image_service_name'][]        = 'Slothradio (uk)';
 $cfg['image_service_charset'][]     = 'UTF-8';
-$cfg['image_service_url'][]         = 'http://covers.slothradio.com/?adv=1&artist=%artist&album=%album&genre=p&imgsize=x&locale=uk&sort=salesrank';
+$cfg['image_service_url'][]         = 'http://www.slothradio.com/covers/?adv=1&artist=%artist&album=%album&genre=p&imgsize=x&locale=uk&sort=salesrank';
 $cfg['image_service_process'][]     = '#<!-- RESULT ITEM START -->.+?><img src="(http://.+?)" width="([0-9]+?)" height="([0-9]+?)"#s';
 $cfg['image_service_urldecode'][]   = false;
 
 $cfg['image_service_name'][]        = 'Slothradio (de)';
 $cfg['image_service_charset'][]     = 'UTF-8';
-$cfg['image_service_url'][]         = 'http://covers.slothradio.com/?adv=1&artist=%artist&album=%album&genre=p&imgsize=x&locale=de&sort=salesrank';
+$cfg['image_service_url'][]         = 'http://www.slothradio.com/covers/?adv=1&artist=%artist&album=%album&genre=p&imgsize=x&locale=de&sort=salesrank';
 $cfg['image_service_process'][]     = '#<!-- RESULT ITEM START -->.+?><img src="(http://.+?)" width="([0-9]+?)" height="([0-9]+?)"#s';
 $cfg['image_service_urldecode'][]   = false;
 
 $cfg['image_service_name'][]        = 'Google';
 $cfg['image_service_charset'][]     = 'UTF-8';
-$cfg['image_service_url'][]         = 'https://www.google.com/search?tbm=isch&q=%artist+%album';
+$cfg['image_service_url'][]         = 'http://images.google.com/images?gbv=1&q=%artist+%album';
 $cfg['image_service_process'][]     = '#/imgres\?imgurl=(http://.+?)&amp;.+?&amp;h=([0-9]+?)&amp;w=([0-9]+?)&amp;#s';
 $cfg['image_service_urldecode'][]   = true;
 
@@ -405,7 +519,7 @@ $cfg['image_lastfm_api_key']        = '';
 
 $cfg['image_service_name'][]        = 'Last.fm';
 $cfg['image_service_charset'][]     = 'UTF-8';
-$cfg['image_service_url'][]         = 'http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=%api_key&artist=%artist&album=%album';
+$cfg['image_service_url'][]         = 'http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=%api_key&artist=%artist&album=%album'; 
 $cfg['image_service_process'][]     = 'lastfm';
 $cfg['image_service_urldecode'][]   = null;
 */
@@ -417,18 +531,36 @@ $cfg['image_service_urldecode'][]   = null;
 //  | Internet ip tools                                                      |
 //  +------------------------------------------------------------------------+
 $cfg['ip_tools']                    = 'http://www.infosniper.net/index.php?ip_address=%ip&map_source=1&overview_map=1&lang=1&map_type=1&zoom_level=5';
-// $cfg['ip_tools']                 = 'http://whois.domaintools.com/%ip';
-// $cfg['ip_tools']                 = 'http://ip-lookup.net/index.php?ip=%ip';
+// $cfg['ip_tools']                    = 'http://ip-lookup.net/index.php?ip=%ip';
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | add_autoplay: Automatic start playing when "add" a track or album      |
+//  | to a empty playlist                                                    |
+//  | play_queue: Will queue files to the playlist with "play" and start     |
+//  | playing the last queued track or album.                                |
+//  +------------------------------------------------------------------------+
+$cfg['add_autoplay']                = true;
+$cfg['play_queue']                  = false;
+$cfg['play_queue_limit']			= 250;
 
 
 
 
 //  +------------------------------------------------------------------------+
 //  | Auto suggest limit (search results)                                    |
-//  | Page limit (max albums per page for new)                               |
 //  +------------------------------------------------------------------------+
 $cfg['autosuggest_limit']           = 25;
-$cfg['page_limit']                  = 100;
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Update refresh time (in miliseconds)                                   |
+//  +------------------------------------------------------------------------+
+$cfg['update_refresh_time']         = 1000;
 
 
 
@@ -438,8 +570,7 @@ $cfg['page_limit']                  = 100;
 //  +------------------------------------------------------------------------+
 //  | The date_format syntax is identical to the PHP date() function.        |
 //  +------------------------------------------------------------------------+
-$cfg['date_format']               = 'r'; 
-$cfg['date_added']                = 'F Y';
+$cfg['date_format']                 = 'r';
 
 
 
@@ -494,18 +625,16 @@ $cfg['album_copy_char_limit']                       = array('"', '*', ':', '<', 
 //  | Authenticate                                                           |
 //  +------------------------------------------------------------------------+
 $cfg['anonymous_user']              = 'anonymous';
-$cfg['anonymous_autologin']         = false;
-$cfg['login_delay']                 = 2000;
-$cfg['session_lifetime']            = 604800; // 3600 * 24 * 7
+$cfg['session_lifetime']            = 604800; // 3600 * 24 * 7;
 $cfg['share_stream_lifetime']       = 604800;
 $cfg['share_download_lifetime']     = 604800;
-
+$cfg['login_delay']                 = 2000;
 
 
 
 
 //  +------------------------------------------------------------------------+
-//  | Message                                                                |
+//  | Admin message                                                          |
 //  +------------------------------------------------------------------------+
 //  | [br]                                                                   |
 //  | [b]bold[/b]                                                            |
@@ -536,3 +665,11 @@ $cfg['offline_message']             = '[b]This site is temporarily unavailable.[
 //  +------------------------------------------------------------------------+
 $cfg['debug']                       = false;
 $cfg['php_info']                    = false;
+
+
+
+//  +------------------------------------------------------------------------+
+//  | For testing some stuff (on my system only) - should be set to off      |
+//  +------------------------------------------------------------------------+
+$cfg['testing']				= "off";
+?>

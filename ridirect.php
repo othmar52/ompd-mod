@@ -1,6 +1,10 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | O!MPD, Copyright © 2015 Artur Sierzant		                         |
+//  | http://www.ompd.pl                                             		 |
+//  |                                                                        |
+//  |                                                                        |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -25,13 +29,20 @@
 //  +------------------------------------------------------------------------+
 //  | ridirect.php                                                           |
 //  +------------------------------------------------------------------------+
+
 require_once('include/initialize.inc.php');
 authenticate('access_media');
 
-$search_id	= (int) @$_GET['search_id'];
-$album_id	= @$_GET['album_id'];
+if ($_GET["query_type"] === 'lyrics') {
+				header('Location: ' . 'https://www.google.com/search?q=' . $_GET["q"] . ' ' . $cfg['lyrics_search']);
+				exit();
+};
 
-if ((pow(2, $search_id) & $cfg['access_search']) == false || isset($cfg['search_name'][$search_id]) == false)
+
+$search_id	= (int) get('search_id');
+$album_id	= get('album_id');
+
+if (isset($cfg['search_name'][$search_id]) == false)
 	message(__FILE__, __LINE__, 'error', '[b]Unsupported input value for[/b][br]search_id');
 
 if ($cfg['search_method'][$search_id] != 'get' && $cfg['search_method'][$search_id] != 'post')
@@ -44,10 +55,10 @@ $cfg['search_url_combined']		= $cfg['search_url_combined'][$search_id];
 $cfg['search_method']			= $cfg['search_method'][$search_id];	
 $cfg['search_charset']			= $cfg['search_charset'][$search_id];
 
-$query = mysqli_query($db, 'SELECT artist, album
+$query = mysql_query('SELECT artist, album
 	FROM album
-	WHERE album_id = "' . mysqli_real_escape_string($db, $album_id) . '"');
-$album = mysqli_fetch_assoc($query);
+	WHERE album_id = "' . mysql_real_escape_string($album_id) . '"');
+$album = mysql_fetch_assoc($query);
 
 if ($album == false)
 	message(__FILE__, __LINE__, 'error', '[b]Error[/b][br]album_id not found in database');
@@ -89,11 +100,11 @@ if ($cfg['search_method'] == 'get') {
 ini_set('default_charset', $cfg['search_charset']);
 list($url, $query) = explode('?', $url, 2);
 ?>
-<!doctype html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=<?php echo html($cfg['search_charset']); ?>">
-	<meta name="generator" content="netjukebox, Copyright (C) 2001-2015 Willem Bartels">
+	<meta name="generator" content="netjukebox, Copyright (C) 2001-2012 Willem Bartels">
 	<title>netjukebox &bull; Ridirect</title>
 	<link rel="shortcut icon" type="image/png" href="image/favicon.png">
 	<style type=text/css>
@@ -101,9 +112,9 @@ list($url, $query) = explode('?', $url, 2);
 	body {background: White; color: Silver;}
 	</style>
 </head>
-<body onload="ridirectform.submit();">
+<body onLoad="document.AutoPost.submit();">
 <span class="large">loading</span>
-<form action="<?php echo $url; ?>" method="post" id="ridirectform">
+<form action="<?php echo $url; ?>" method="post" name="AutoPost" id="AutoPost">
 <?php
 $query_array = explode ('&', $query);
 foreach ($query_array as $sub_query)	{

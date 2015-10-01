@@ -1,6 +1,10 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | O!MPD, Copyright © 2015 Artur Sierzant		                         |
+//  | http://www.ompd.pl                                             		 |
+//  |                                                                        |
+//  |                                                                        |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -26,8 +30,9 @@
 //  | about.php                                                              |
 //  +------------------------------------------------------------------------+
 require_once('include/initialize.inc.php');
+require_once('getid3/getid3/getid3.php'); // for version info
 
-$action = @$_GET['action'];
+$action = get('action');
 
 if		($action == '')				about();
 elseif	($action == 'license')		license();
@@ -44,10 +49,10 @@ function versionCheck($ttl) {
 	global $cfg, $db;
 	
 	if ($cfg['latest_version_idle_time'] < time() - $ttl) {
-		if ($cfg['latest_version'] = @file_get_contents('http://www.netjukebox.nl/version.txt')) {
+		if ($cfg['latest_version'] = @file_get_contents('http://www.ompd.pl/version.txt')) {
 			$cfg['latest_version_idle_time'] = time();
-			mysqli_query($db, 'UPDATE server SET value = "' . mysqli_real_escape_string($db, $cfg['latest_version']) . '" WHERE name = "latest_version"');
-			mysqli_query($db, 'UPDATE server SET value = "' . (int) $cfg['latest_version_idle_time']  . '" WHERE name = "latest_version_idle_time"');
+			mysql_query('UPDATE server SET value = "' . mysql_real_escape_string($cfg['latest_version']) . '" WHERE name = "latest_version"');
+			mysql_query('UPDATE server SET value = "' . (int) $cfg['latest_version_idle_time']  . '" WHERE name = "latest_version_idle_time"');
 		}
 		else
 			$cfg['latest_version'] = 'Unresolved';		
@@ -66,68 +71,64 @@ function about() {
 	global $cfg;
 	authenticate('access_always');
 	
-	// Navigator
-	$nav			= array();
-	$nav['name'][]	= 'About netjukebox';
-	
+	// formattedNavigator
+	/* $nav			= array();
+	$nav['name'][]	= 'About O!MPD'; */
+	$cfg['menu'] = 'about';
 	require_once('include/header.inc.php');
-	require_once('getid3/getid3/getid3.php');
-	$getID3 = new getID3; // for version info
 ?>
-<table class="border">
-<tr class="header">
+<table cellspacing="0" cellpadding="0" class="border">
+<tr class="header header_bigger">
 	<td class="space"></td>
-	<td colspan="3">netjukebox <?php echo html(NJB_VERSION); ?>, Copyright &copy; 2001-2015 Willem Bartels</td>
+	<td colspan="3" style="white-space: normal;">
+	O!MPD&nbsp;<?php echo html(NJB_VERSION); ?>,&nbsp;Copyright&nbsp;&copy;&nbsp;2015&nbsp;Artur&nbsp;Sier&#380;ant<br>
+	
+	</td>
 	<td class="space"></td>
 </tr>
+<tr class="line"><td colspan="5"></td></tr>
 <tr class="odd space"><td colspan="5"></td></tr>
 <tr class="odd">
 	<td></td>
 	<td colspan="3">
+	<i class="fa fa-globe"></i>&nbsp;&nbsp;<a href="http://www.ompd.pl">http://www.ompd.pl</a><br>
+	<i class="fa fa-envelope-o"></i>&nbsp;&nbsp;<a href="mailto:info@ompd.pl">info@ompd.pl</a><br><br>
 	This program comes with <a href="about.php?action=license#nowarranty">ABSOLUTELY NO WARRANTY</a>.<br>
 	This is free software, and you are welcome to redistribute it<br>
-	under certain <a href="about.php?action=license#conditions">conditions</a>.</td>
-	<td></td>
-</tr>
-<tr class="odd"><td colspan="5"></td></tr>
-<tr class="odd">
-	<td></td>
-	<td>
-	<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
-	<input type="hidden" name="cmd" value="_s-xclick">
-	<input type="image" src="image/paypal.gif" alt="PayPal" title="Donate with PayPal!">
-	<input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----">
-	</form>
+	under certain <a href="about.php?action=license#conditions">conditions</a>.
+	<br><br>
+	O!MPD is fork of netjukebox&nbsp;Copyright&nbsp;&copy;&nbsp;2001-2012&nbsp;Willem&nbsp;Bartels <a href="http://www.netjukebox.nl/">http://www.netjukebox.nl</a>
 	</td>
-	<td class="textspace"></td>
-	<td class="vertical-align-top"><a href="http://www.netjukebox.nl/">http://www.netjukebox.nl</a><br>
-	<a href="http://forum.netjukebox.nl/">http://forum.netjukebox.nl</a></td>
 	<td></td>
 </tr>
 <tr class="odd space"><td colspan="5"></td></tr>
 <?php
 	if (file_exists(NJB_HOME_DIR . 'skin/' . $cfg['skin'] . '/about.txt') && $skin_message = @file_get_contents(NJB_HOME_DIR . 'skin/' . $cfg['skin'] . '/about.txt')) { ?>
-<tr class="section">
+<tr class="line"><td colspan="5"></td></tr>
+<tr class="header header_bigger">
 	<td></td>
 	<td colspan="3">Current skin:</td>
 	<td></td>
 </tr>
+<tr class="line"><td colspan="5"></td></tr>
 <tr class="odd space"><td colspan="5"></td></tr>
 <tr class="odd">
 	<td></td>
-	<td colspan="3" class="vertical-align-top"><?php echo bbcode($skin_message); ?></td>
+	<td colspan="3" valign="top"><?php echo bbcode($skin_message); ?></td>
 	<td></td>
 </tr>
 <tr class="odd space"><td colspan="5"></td></tr>
 <?php
 	}
 	if ($cfg['access_admin']) {
-		$ttl = (@$_GET['forceVersionCheck'] == '1') ? 0 : 3600; ?>
-<tr class="section">
+		$ttl = (get('forceVersionCheck') == '1') ? 0 : 3600; ?>
+<tr class="line"><td colspan="5"></td></tr>
+<tr class="header header_bigger">
 	<td></td>
 	<td colspan="3">Version check:</td>
 	<td></td>
 </tr>
+<tr class="line"><td colspan="5"></td></tr>
 <tr class="<?php echo (versionCheck($ttl)) ? 'odd_ok' : 'odd_error'; ?>">
 	<td></td>
 	<td>Current version:</td>
@@ -139,63 +140,110 @@ function about() {
 	<td></td>
 	<td>Latest version:</td>
 	<td></td>
-	<td><a href="about.php?forceVersionCheck=1" title="Force re-check version"><?php echo html($cfg['latest_version']); ?></a></td>
+	<td><a href="about.php?forceVersionCheck=1" onMouseOver="return overlib('Re-Check version');" onMouseOut="return nd();"><?php echo html($cfg['latest_version']); ?></a></td>
 	<td></td>
 </tr>
 <?php
 	}
 	$i = 0; ?>
-<tr class="section">
+<tr class="line"><td colspan="5"></td></tr>
+<tr class="header header_bigger">
 	<td></td>
-	<td colspan="3">Included scripts and fonts:</td>
+	<td colspan="3">Included scripts, fonts and images:</td>
+	<td></td>
+</tr>
+<tr class="line"><td colspan="5"></td></tr>
+<tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?>">
+	<td></td>
+	<td>Google fonts</td>
+	<td></td>
+	<td><a href="http://www.google.com/fonts/" target="_new">http://www.google.com/fonts/</a></td>
 	<td></td>
 </tr>
 <tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?>">
 	<td></td>
-	<td title="<?php echo $getID3->version(); ?>">getID3()</td>
+	<td>Font Awesome</td>
 	<td></td>
-	<td><a href="http://www.getid3.org">http://www.getid3.org</a></td>
-	<td></td>
-</tr>
-<tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?>">
-	<td></td>
-	<td>QR Code</td>
-	<td></td>
-	<td><a href="http://www.swetake.com/qr/">http://www.swetake.com/qr/</a></td>
+	<td><a href="http://fortawesome.github.io/Font-Awesome/" target="_new">http://fortawesome.github.io/Font-Awesome/</a></td>
 	<td></td>
 </tr>
 <tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?>">
 	<td></td>
-	<td>Roboto fonts</td>
+	<td>Typicons</td>
 	<td></td>
-	<td><a href="http://developer.android.com/design/style/typography.html">http://developer.android.com/design/style/typography.html</a></td>
+	<td><a href="http://typicons.com/" target="_new">http://typicons.com/</a></td>
+	<td></td>
+</tr>
+<tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?>">
+	<td></td>
+	<td>jQuery</td>
+	<td></td>
+	<td><a href="http://jquery.com/" target="_new">http://jquery.com/</a></td>
+	<td></td>
+</tr>
+<tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?>">
+	<td></td>
+	<td>spin.js</td>
+	<td></td>
+	<td><a href="http://fgnass.github.io/spin.js/" target="_new">http://fgnass.github.io/spin.js/</a></td>
+	<td></td>
+</tr>
+<tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?>">
+	<td></td>
+	<td>getID3() <?php $getID3 = new getID3; echo $getID3->version(); ?></td>
+	<td></td>
+	<td><a href="http://www.getid3.org" target="_new">http://www.getid3.org</a></td>
+	<td></td>
+</tr>
+<tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?>">
+	<td></td>
+	<td>overLIB <script type="text/javascript">
+	<!--
+		document.write(olInfo.version);
+	//-->
+	</script></td>
+	<td></td>
+	<td><a href="http://www.bosrup.com/web/overlib/" target="_new">http://www.bosrup.com/web/overlib/</a></td>
 	<td></td>
 </tr>
 <tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?>">
 	<td></td>
 	<td>SHA-1</td>
 	<td></td>
-	<td><a href="http://www.pajhome.org.uk/crypt/md5/">http://www.pajhome.org.uk/crypt/md5/</a></td>
+	<td><a href="http://www.pajhome.org.uk/crypt/md5/" target="_new">http://www.pajhome.org.uk/crypt/md5/</a></td>
 	<td></td>
 </tr>
 <tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?>">
 	<td></td>
-	<td>Tooltip</td>
+	<td>PHP Paginator Class</td>
 	<td></td>
-	<td><a href="http://www.squidfingers.com">http://www.squidfingers.com</a></td>
+	<td><a href="https://gist.github.com/daslicht/c319e18a1c8761f360ad" target="_new">https://gist.github.com/daslicht/c319e18a1c8761f360ad</a></td>
 	<td></td>
 </tr>
+<tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?>">
+	<td></td>
+	<td>TouchSwipe</td>
+	<td></td>
+	<td><a href="http://labs.rampinteractive.co.uk/touchSwipe/" target="_new">http://labs.rampinteractive.co.uk/touchSwipe/</a></td>
+	<td></td>
+</tr>
+
+
+
+
 <?php
 	if ($cfg['admin_about_message'] != '') { ?>
-<tr class="section">
+<tr class="line"><td colspan="5"></td></tr>
+<tr class="header header_bigger">
 	<td></td>
 	<td colspan="3">Admin message:</td>
 	<td></td>
 </tr>
+<tr class="line"><td colspan="5"></td></tr>
 <tr class="odd space"><td colspan="5"></td></tr>
 <tr class="odd">
 	<td></td>
-	<td colspan="3" class="vertical-align-top"><?php echo bbcode($cfg['admin_about_message']); ?></td>
+	<td colspan="3" valign="top"><?php echo bbcode($cfg['admin_about_message']); ?></td>
 	<td></td>
 </tr>
 <tr class="odd space"><td colspan="5"></td></tr>
@@ -216,19 +264,21 @@ function license() {
 	global $cfg;
 	authenticate('access_always');
 	
-	// Navigator
-	$nav			= array();
-	$nav['name'][]	= 'About netjukebox';
+	// formattedNavigator
+	/* $nav			= array();
+	$nav['name'][]	= 'About O!MPD';
 	$nav['url'][]	= 'about.php';
-	$nav['name'][]	= 'Licence';
+	$nav['name'][]	= 'Licence'; */
+	$cfg['menu'] = 'about';
 	require_once('include/header.inc.php');
 ?>
-<table class="border">
+<table cellspacing="0" cellpadding="0" class="border">
 <tr class="header">
 	<td class="space"></td>
 	<td>GNU GENERAL PUBLIC LICENSE</td>
 	<td class="space"></td>
 </tr>
+<tr class="line"><td colspan="3"></td></tr>
 <tr class="even">
 	<td></td>
 	<td>
@@ -304,7 +354,7 @@ patents cannot be used to render the program non-free.
   The precise terms and conditions for copying, distribution and
 modification follow.
 
-                       <a id="conditions"></a>TERMS AND CONDITIONS
+                       <a name="conditions" id="conditions"></a>TERMS AND CONDITIONS
 
   0. Definitions.
 
@@ -822,7 +872,7 @@ permissions.  However, no additional obligations are imposed on any
 author or copyright holder as a result of your choosing to follow a
 later version.
 
-  <a id="nowarranty"></a>15. Disclaimer of Warranty.
+  <a name="nowarranty" id="nowarranty"></a>15. Disclaimer of Warranty.
 
   THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
 APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
@@ -863,3 +913,4 @@ copy of the Program in return for a fee.
 <?php
 	require_once('include/footer.inc.php');
 }
+?>

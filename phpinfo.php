@@ -1,6 +1,6 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -39,3 +39,4 @@ ob_end_clean();
 $phpinfo = preg_replace('#a:link \{.+?\}#', 'a:link, a:visited {color: #000099; text-decoration: none;}', $phpinfo);
 $phpinfo = preg_replace('#PHP Version#', '<a href="config.php">netjukebox ' . html(NJB_VERSION) . '</a> | PHP Version', $phpinfo);
 echo $phpinfo;
+?>

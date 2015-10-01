@@ -1,6 +1,6 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | netjukebox, Copyright © 2001-2011 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -31,8 +31,7 @@ header('Cache-Control: no-store, no-cache, must-revalidate');
 
 
 
-echo '<!doctype html><html><head><title></title></head><body>' . "\n";
-exit('<strong>BEFORE USE MAKE A BACKUP</strong><br><br>netjukebox line break converter.<br>Comment out line ' . __LINE__ . ' to run this script.</body></html>');
+exit('<strong>BEFORE USE MAKE A BACKUP</strong><br><br>netjukebox line break converter.<br>Comment out line ' . __LINE__ . ' to run this script.');
 
 
 
@@ -75,8 +74,7 @@ $cfg['home_dir']	= str_replace('\\', '/', $directory) . '/';
 //  | Convert                                                                |
 //  +------------------------------------------------------------------------+
 recursiveScan($cfg['home_dir']);
-echo 'Ready' . "\n";
-echo '</body></html>';
+echo 'Ready';
 
 
 
@@ -87,7 +85,7 @@ echo '</body></html>';
 function recursiveScan($dir) {
 	global $cfg;
 	
-	$entries = @scandir($dir) or exit('Failed to open directory:<br>' . htmlspecialchars($dir, ENT_COMPAT) . '</body></html>');
+	$entries = @scandir($dir) or exit('Failed to open directory:<br>' . htmlentities($dir));
 	foreach ($entries as $entry) {
 		if ($entry[0] != '.' && !in_array($entry, array($cfg['exclude_script'], 'lost+found', 'Temporary Items', 'Network Trash Folder', 'System Volume Information', 'RECYCLER', '$RECYCLE.BIN'))) {
 			if (is_dir($dir . $entry . '/'))
@@ -100,11 +98,15 @@ function recursiveScan($dir) {
 					$input_script = file_get_contents($file);
 					$output_script = str_replace($cfg['input_line_break'], $cfg['output_line_break'], $input_script);
 					if ($input_script != $output_script) {
-						echo '<strong>Convert:</strong> ' . htmlspecialchars($file, ENT_COMPAT) . '<br>' . "\n";
+						echo '<strong>Convert:</strong> ' . htmlentities($file) . '<br>';
 						file_put_contents($file, $output_script);
 					}
 					else
-						echo '<strong>No convertion needed:</strong> ' . htmlspecialchars($file, ENT_COMPAT) . '<br>' . "\n";	
+						echo '<strong>No convertion needed:</strong> ' . htmlentities($file) . '<br>';
+					@ob_flush();
+					flush();
+					
+					
 				}
 			}
 		}

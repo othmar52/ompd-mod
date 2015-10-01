@@ -1,6 +1,6 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -25,11 +25,10 @@
 //  +------------------------------------------------------------------------+
 //  | cache.php                                                              |
 //  +------------------------------------------------------------------------+
-require_once('include/library.inc.php');
+require_once('include/initialize.inc.php');
 require_once('include/stream.inc.php');
 
-define('NJB_HOME_DIR', str_replace('\\', '/', __DIR__) . '/');
-$action = @$_GET['action'];
+$action = get('action');
 
 if		($action == 'css')			css();
 elseif	($action == 'javascript')	javascript();
@@ -44,16 +43,16 @@ exit();
 function css() {
 	global $cfg;
 	
-	$skin = @$_GET['skin'];
+	$skin = get('skin');
 	
 	if (validateSkin($skin) == false)
 		exit('/* cache css error */');
 			
-	$content = @file_get_contents('skin/' . $skin . '/style.css') or exit('/* cache css error */');
-	$content = str_replace('fonts/', 'skin/' . rawurlencode($skin) . '/fonts/', $content);
+	$content = @file_get_contents('skin/' . $skin . '/styles.css') or exit('/* cache css error */');
 	$content = str_replace('img/', 'skin/' . rawurlencode($skin) . '/img/', $content);
+	$content = str_replace('flag/', 'skin/' . rawurlencode($skin) . '/flag/', $content);
 
-	header('Cache-Control: max-age=604800');
+	header('Cache-Control: max-age=31536000');
 	streamData($content, 'text/css', false, false, '"never_expire"');
 }
 
@@ -66,16 +65,16 @@ function css() {
 function javascript() {
 	global $cfg;
 	
-	$source = array('javascript-src/library.js',
-					'javascript-src/tooltip.js',
+	$source = array('javascript-src/initialize.js',
+					'javascript-src/overlib.js',
+					'javascript-src/overlib_cssstyle.js',
 					'javascript-src/sha1.js');
 	
 	$content = '';
-	foreach ($source as $file) {
+	foreach ($source as $file)
 		$content .= @file_get_contents($file) or exit('/* cache javascript error */');
-		$content .= "\n";	
-	}
 	
-	header('Cache-Control: max-age=604800');
+	header('Cache-Control: max-age=31536000');
 	streamData($content, 'application/javascript', false, false, '"never_expire"');
 }
+?>

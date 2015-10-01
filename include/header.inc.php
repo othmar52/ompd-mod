@@ -1,6 +1,10 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | O!MPD, Copyright © 2015 Artur Sierzant		                         |
+//  | http://www.ompd.pl                                             		 |
+//  |                                                                        |
+//  |                                                                        |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -20,8 +24,6 @@
 //  +------------------------------------------------------------------------+
 
 
-
-
 //  +------------------------------------------------------------------------+
 //  | css hash                                                               |
 //  +------------------------------------------------------------------------+
@@ -29,10 +31,11 @@ function css_hash() {
 	global $cfg;
 	
 	$hash_data =  filemtime(NJB_HOME_DIR . 'cache.php');
-	$hash_data .= filemtime(NJB_HOME_DIR . 'skin/' . $cfg['skin'] . '/style.css');
+	$hash_data .= filemtime(NJB_HOME_DIR . 'skin/' . $cfg['skin'] . '/styles.css');
 	
 	return md5($hash_data);
 }
+
 
 
 
@@ -41,12 +44,14 @@ function css_hash() {
 //  | javascript hash                                                        |
 //  +------------------------------------------------------------------------+
 function javascript_hash() {
-	$source = array('cache.php',
-					'javascript-src/library.js',
-					'javascript-src/tooltip.js',
+	global $cfg;
+	
+	$source = array('javascript-src/initialize.js',
+					'javascript-src/overlib.js',
+					'javascript-src/overlib_cssstyle.js',
 					'javascript-src/sha1.js');
 	
-	$hash_data = '';
+	$hash_data = filemtime(NJB_HOME_DIR . 'cache.php');
 	foreach ($source as $file)
 		$hash_data .= filemtime(NJB_HOME_DIR . $file);
 	
@@ -57,65 +62,41 @@ function javascript_hash() {
 
 
 //  +------------------------------------------------------------------------+
-//  | Navigator                                                              |
+//  | Head & Body                                                            |
 //  +------------------------------------------------------------------------+
-$breadcrumbs = '';
-$header['navigator'] = '';
-if (empty($nav['name']) == false) {
-	$max_index = count($nav['name']) -1;
-	
-	for ($i = 0; $i <= $max_index; $i++)
-		$nav['class'][$i] = empty($nav['class'][$i]) ? 'nav' : $nav['class'][$i];
-	
-	// breadcrumbs
-	$keys = array_keys($nav['class'], 'nav');
-	foreach ($keys as $key => $value)
-		$breadcrumbs .= $nav['name'][$value] . ' > ';
-	$breadcrumbs = substr($breadcrumbs, 0, -3);
-	
-	$header['navigator'] .= '<ul id="navigator" class="bottom_space">' . "\n";
-	$header['navigator'] .= "\t" . '<li class="home">&nbsp;</li>' . "\n";
-	
-	for ($i = 0; $i <= $max_index; $i++) {
-		$class = $nav['class'][$i];
-		if (empty($nav['url'][$i]))		$header['navigator'] .= "\t" . '<li class="' . html($class) . '"><span>' . html($nav['name'][$i]) . '</span></li>' . "\n";
-		else							$header['navigator'] .= "\t" . '<li class="' . html($class) . '"><a href="' . $nav['url'][$i] . '">' . html($nav['name'][$i]) . '</a></li>' . "\n";
-		if ($i < $max_index)			$header['navigator'] .= "\t" . '<li class="' . $nav['class'][$i] . '_' . $nav['class'][$i + 1] . '">&nbsp;</li>' . "\n";		
-	}
-	if ($nav['class'][$max_index] == 'suggest')	$header['navigator'] .= "\t" . '<li class="suggest_close">&nbsp;</li>' . "\n";
-	else										$header['navigator'] .= "\t" . '<li class="nav_close">&nbsp;</li>' . "\n";	
-	$header['navigator'] .= '</ul>' . "\n";
-}
-unset($nav);
+$header['title'] = 'O!MPD &bull; ';
+if (NJB_SCRIPT == 'message.php')									$header['title'] .= 'Message';
+elseif ($cfg['username'] == '')										$header['title'] .= 'Live @ ' . html($_SERVER['HTTP_HOST']);
+elseif (NJB_SCRIPT == 'playlist.php')								$header['title'] .= 'Now playing';
+elseif (get('authenticate') == 'logout')							$header['title'] .= 'Logout';
+elseif (get('authenticate') == 'logoutSession' && get('sign'))		$header['title'] .= 'Signed (Logout session)';
+elseif (get('authenticate') == 'logoutAllSessions' && get('sign'))	$header['title'] .= 'Signed (Logout all sessions)';
+elseif (getpost('sign'))											$header['title'] .= 'Signed (' . html(implode(' - ', $nav['name'])) . ')';
+elseif (empty($nav['name']))										$header['title'] .= 'Undefined';
+else																$header['title'] .=  html(implode(' - ', $nav['name']));
 
+$header['head']  = "\t" . '<meta http-equiv="Content-Type" content="text/html; charset=' . html(NJB_DEFAULT_CHARSET) .'">' . "\n";
 
-
-
-//  +------------------------------------------------------------------------+
-//  | Head                                                                   |
-//  +------------------------------------------------------------------------+
-$header['title'] = 'netjukebox &bull; ';
-if (NJB_SCRIPT == 'message.php')					$header['title'] .= 'Message';
-elseif ($cfg['username'] == '')						$header['title'] .= 'Live @ ' . html($_SERVER['HTTP_HOST']);
-elseif (@$_GET['authenticate'] == 'logout')			$header['title'] .= 'Logout';
-elseif (@$_REQUEST['sign'])							$header['title'] .= 'Signed (' . html(strtolower($breadcrumbs)) . ')';
-elseif (empty($breadcrumbs))						$header['title'] .= 'Undefined';
-else												$header['title'] .=  html($breadcrumbs);
-
-$header['head']  = '<head>' . "\n";
-$header['head']  .= "\t" . '<meta http-equiv="Content-Type" content="text/html; charset=' . html(NJB_DEFAULT_CHARSET) .'">' . "\n";
-$header['head'] .= "\t" . '<meta name="application-name" content="netjukebox ' . html(NJB_VERSION) . ', Copyright ' . html_entity_decode('&copy;', null, NJB_DEFAULT_CHARSET) . ' 2001-2015 Willem Bartels">' . "\n";
+$header['head'] .= "\t" . '<meta name="generator" content="netjukebox, Copyright (C) 2001-2012 Willem Bartels; O!MPD, Copyright (C) 2015 Artur Sierzant">' . "\n";
 $header['head'] .= "\t" . '<title>' . $header['title'] . '</title>' . "\n";
 if (isset($cfg['access_media']) && $cfg['access_media']) {
-	$header['head'] .= "\t" . '<link rel="search" type="application/opensearchdescription+xml" title="netjukebox - Album Artist" href="' . NJB_HOME_URL . 'opensearch.php?action=installAlbumArtist">' . "\n";
-	$header['head'] .= "\t" . '<link rel="search" type="application/opensearchdescription+xml" title="netjukebox - Track Artist" href="' . NJB_HOME_URL . 'opensearch.php?action=installTrackArtist">' . "\n";
-	$header['head'] .= "\t" . '<link rel="search" type="application/opensearchdescription+xml" title="netjukebox - Title" href="' . NJB_HOME_URL . 'opensearch.php?action=installTrackTitle">' . "\n";
+	$header['head'] .= "\t" . '<link rel="search" type="application/opensearchdescription+xml" title="O!MPD - Album Artist" href="' . NJB_HOME_URL . 'opensearch.php?action=installAlbumArtist">' . "\n";
+	$header['head'] .= "\t" . '<link rel="search" type="application/opensearchdescription+xml" title="O!MPD - Track Artist" href="' . NJB_HOME_URL . 'opensearch.php?action=installTrackArtist">' . "\n";
+	$header['head'] .= "\t" . '<link rel="search" type="application/opensearchdescription+xml" title="O!MPD - Title" href="' . NJB_HOME_URL . 'opensearch.php?action=installTrackTitle">' . "\n";
 }
-$header['head'] .= "\t" . '<link rel="shortcut icon" type="image/png" href="image/favicon.png">' . "\n";
-$header['head'] .= "\t" . '<link rel="apple-touch-icon" href="image/apple_touch_icon.png">' . "\n";
+$header['head'] .= "\t" . '<link rel="shortcut icon" type="image/png" href="image/o_lg.png">' . "\n";
+
+//$header['head'] .= "\t" . '<link href="http://fonts.googleapis.com/css?family=Noto+Sans:400,700" rel="stylesheet" type="text/css">' . "\n";
+//$header['head'] .= "\t" . '<link href="http://fonts.googleapis.com/css?family=Roboto:400,300,100&subset=latin,latin-ext" rel="stylesheet" type="text/css">' . "\n";
+$header['head'] .= "\t" . '<link rel="stylesheet" href="fonts/font-awesome-4.2.0/css/font-awesome.min.css">' . "\n";
+$header['head'] .= "\t" . '<link rel="stylesheet" type="text/css" href="fonts/typicons/typicons.css">' . "\n";
 $header['head'] .= "\t" . '<link rel="stylesheet" type="text/css" href="cache.php?action=css&amp;skin=' . rawurlencode($cfg['skin']) . '&amp;hash=' . css_hash() . '">' . "\n";
-$header['head'] .= "\t" . '<script type="text/javascript" src="cache.php?action=javascript&amp;hash=' . javascript_hash() . '"></script>' . "\n";
-$header['head'] .= '</head>' . "\n";
+$header['head'] .= "\t" . '<script src="cache.php?action=javascript&amp;hash=' . javascript_hash() . '" type="text/javascript"></script>' . "\n";
+
+//$header['head'] .= "\t" . '<script src="jquery/jquery.js"></script>' . "\n";
+
+
+$header['body'] = 'onload="javascript: if (window.initialize) initialize(); cookie(); "';
 
 
 
@@ -123,67 +104,44 @@ $header['head'] .= '</head>' . "\n";
 //  +------------------------------------------------------------------------+
 //  | Menu                                                                   |
 //  +------------------------------------------------------------------------+
-$header['menu'] = '<ul id="menu">' . "\n";
-$header['menu'] .= "\t" . '<li class="' . ($cfg['menu'] == 'media' ? 'on' : 'off') . '"><a href="index.php">media</a></li>' . "\n";
-$header['menu'] .= "\t" . '<li class="' . ($cfg['menu'] == 'favorite' ? 'on' : 'off') . '"><a href="favorite.php">favorites</a></li>' . "\n";
-$header['menu'] .= "\t" . '<li class="' . ($cfg['menu'] == 'playlist' ? 'on' : 'off') . '"><a href="playlist.php">playlist</a></li>' . "\n";
-$header['menu'] .= "\t" . '<li class="' . ($cfg['menu'] == 'config' ? 'on' : 'off') . '"><a href="config.php">config</a></li>' . "\n";
-$header['menu'] .= '</ul>' . "\n";
-
-
-
-
-//  +------------------------------------------------------------------------+
-//  | Submenu                                                                |
-//  +------------------------------------------------------------------------+
-$header['submenu'] = '<ul id="submenu">' . "\n";
-if ($cfg['menu'] == 'media') {
-	$header['submenu'] .= "\t" . '<li><a class="character" href="index.php?action=view1&amp;filter=start&amp;artist=%23">#</a></li><!--' . "\n";
+$header['seperation'] = ' <span class="seperation">|</span> ' . "\n";
+if ($cfg['menu'] == 'Library') {
+	/* $header['menu'] = "\t" . '<a href="index.php?action=view2&amp;filter=all&amp;order=artist">all</a>' . $header['seperation'];
+	$header['menu'] .= "\t" . '<a href="index.php?action=view2&amp;filter=symbol&amp;artist=%23&amp;order=artist">#</a>' . $header['seperation'];
 	for ($i = 'a'; $i != 'aa'; $i++)
-		$header['submenu'] .= "\t" . '--><li class="character"><a href="index.php?action=view1&amp;filter=start&amp;artist=' . $i . '">' . $i . '</a></li><!--' . "\n";
-	$header['submenu'] .= "\t" . '--><li><a href="index.php?action=view2&amp;artist=Various&amp;filter=exact">various</a></li><!--' . "\n";
-	$header['submenu'] .= "\t" . '--><li><a href="index.php?action=viewYear">year</a></li><!--' . "\n";
-	$header['submenu'] .= "\t" . '--><li><a href="index.php?action=view2&amp;filter=all&amp;order=added&amp;sort=desc&amp;page=1">new</a></li><!--' . "\n";
-	$header['submenu'] .= "\t" . '--><li><a href="index.php?action=viewPopular&amp;period=overall">popular</a></li><!--' . "\n";
-	$header['submenu'] .= "\t" . '--><li><a href="index.php?action=viewRandomAlbum">random</a></li>' . "\n";
-}
-elseif ($cfg['menu'] == 'favorite')	{
-	$header['submenu'] .= "\t" . '<li><a href="favorite.php">favorites</a></li>' . "\n";
-}
+		//$header['menu'] .= "\t" . '<a href="index.php?action=view2&amp;filter=start&amp;artist=' . $i . '">' . $i . '</a>' . $header['seperation'];
+		  $header['menu'] .= "\t" . '<a href="index.php?action=view2&amp;filter=start&amp;artist='. $i .'&amp;order=artist">' . $i . '</a>' . $header['seperation'];
+	$header['menu'] .= "\t"  . '<a href="index.php?action=view2&amp;artist=Various%20Artists&amp;filter=exact&amp;order=artist">VA</a>' . $header['seperation'];
+	$header['menu'] .= "\t" . '<a href="index.php?action=viewYear">year</a>' . $header['seperation'];
+	$header['menu'] .= "\t" . '<a href="index.php?action=viewNew">new</a>'. $header['seperation'];
+	$header['menu'] .= "\t" . '<a href="index.php?action=viewPopular&amp;period=overall&amp;order=artist">popular</a>' . $header['seperation'];
+	$header['menu'] .= "\t"  . '<a href="index.php?action=viewRandomAlbum&amp;order=artist">random</a>'; */
+	}
+
 elseif ($cfg['menu'] == 'playlist')	{
-	$header['submenu'] .= "\t";
-	if ($cfg['access_stream'] && $cfg['access_playlist'])
-		$header['submenu'] .= '<li><a href="stream.php?action=m3uPlaylist&amp;stream_id=' . $cfg['stream_id'] . '&amp;short_sid=' . substr($cfg['sid'], 0, 8) . '&amp;hash=' . hmacsha1(@$cfg['server_seed'] . $cfg['sid'], 'm3uPlaylist' . $cfg['stream_id']) . '&amp;menu=playlist">stream playlist</a></li><!--' . "\n\t" . '-->';
-	$header['submenu'] .= '<li><a href="javascript:ajaxRequest(\'play.php?action=deletePlaylist&amp;menu=playlist\');">delete playlist</a></li><!--' . "\n";
-	$header['submenu'] .= "\t" . '--><li><a href="javascript:ajaxRequest(\'play.php?action=deletePlayed&amp;menu=playlist\');">delete played</a></li>' . "\n";
+	$header['menu'] = "\t" . '<a href="javascript:ajaxRequest(\'play.php?action=deletePlayed&amp;menu=playlist\');">delete played</a>' . $header['seperation'];
+	$header['menu'] .= "\t" . '<a class="showPL">show playlist</a>' . $header['seperation'];
+	 {
+		$header['menu'] .= "\t" . '<a href="javascript:ajaxRequest(\'play.php?action=loopGain&amp;menu=playlist\',evaluateGain);" id="gain"><span id="gain_text" class="gain">gain off</span></a>';
+	};
 }
+
+elseif ($cfg['menu'] == 'favorite')	{
+	$header['menu'] = "\t" . '<a href="favorite.php">favorites</a>' . "\n";
+}
+
 elseif ($cfg['menu'] == 'config') {
-	$header['submenu'] .= "\t" . '<li><a href="config.php?action=playerProfile">player profile</a></li><!--' . "\n";
-	$header['submenu'] .= "\t" . '--><li><a href="config.php?action=streamProfile">stream profile</a></li><!--' . "\n";
-	$header['submenu'] .= "\t" . '--><li><a href="config.php?action=downloadProfile">download profile</a></li><!--' . "\n";
-	$header['submenu'] .= "\t" . '--><li><a href="config.php?action=skinProfile">skin profile</a></li><!--' . "\n";
-	$header['submenu'] .= "\t" . '--><li><a href="users.php">users</a></li><!--' . "\n";
-	$header['submenu'] .= "\t" . '--><li><a href="users.php?action=online">online</a></li><!--' . "\n";	
-	$header['submenu'] .= "\t" . '--><li><a href="update.php?action=update">update</a></li>' . "\n";
+	$header['menu'] = "\t" . '<a href="config.php?action=playerProfile">player profile</a>' . $header['seperation'];
+	$header['menu'] .= "\t" . '<a href="config.php?action=streamProfile">stream profile</a>' . $header['seperation'];
+	$header['menu'] .= "\t" . '<a href="config.php?action=downloadProfile">download profile</a>' . $header['seperation'];
+	$header['menu'] .= "\t" . '<a href="config.php?action=skinProfile">skin profile</a>' . $header['seperation'];
+	$header['menu'] .= "\t" . '<a href="users.php">users</a>' . $header['seperation'];
+	$header['menu'] .= "\t" . '<a href="update.php?action=update&amp;sign=' . $cfg['sign'] . '">update</a>' . "\n";
 }
-$header['submenu'] .= '</ul>' . "\n";
 
-
-
-
-//  +------------------------------------------------------------------------+
-//  | No script                                                              |
-//  +------------------------------------------------------------------------+
-$header['no_javascript'] = '';
-if (NJB_SCRIPT != 'about.php') {
-	$header['no_javascript'] .= '<noscript>' . "\n";
-	$header['no_javascript'] .= '<table class="error">' . "\n";
-	$header['no_javascript'] .= '<tr>' . "\n";
-	$header['no_javascript'] .= "\t" . '<td><img src="' . $cfg['img'] . 'medium_message_error.png" alt=""></td>' . "\n";
-	$header['no_javascript'] .= "\t" . '<td><strong>JavaScript is required</strong><br>Enable JavaScript in the web browser.</td>' . "\n";
-	$header['no_javascript'] .= '</tr>' . "\n";
-	$header['no_javascript'] .= '</table>' . "\n";
-	$header['no_javascript'] .= '</noscript>' . "\n";
+elseif ($cfg['menu'] == 'about') {
+	$header['menu'] = "\t" . '<a href="about.php">about O!MPD</a>' . $header['seperation'];
+	$header['menu'] .= "\t" . '<a href="about.php?action=license">license</a>' . $header['seperation'];
 }
 
 
@@ -193,5 +151,44 @@ if (NJB_SCRIPT != 'about.php') {
 //  | Header template                                                        |
 //  +------------------------------------------------------------------------+
 require_once(NJB_HOME_DIR . 'skin/' . $cfg['skin'] . '/template.header.php');
-unset($header);
+$header = null;
 
+
+
+
+//  +------------------------------------------------------------------------+
+//  | No script                                                              |
+//  +------------------------------------------------------------------------+
+if (NJB_SCRIPT != 'about.php') {
+	echo '<noscript>' . "\n";
+	echo '<table cellspacing="10" cellpadding="0" class="error">' . "\n";
+	echo '<tr>' . "\n";
+	echo "\t" . '<td valign="top"><img src="' . $cfg['img'] . 'medium_message_error.png" alt=""></td>' . "\n";
+	echo "\t" . '<td valign="top"><strong>JavaScript is required</strong><br>Enable JavaScript in the web browser.</td>' . "\n";
+	echo '</tr>' . "\n";
+	echo '</table>' . "\n";
+	echo '</noscript>' . "\n";
+}
+
+
+
+
+//  +------------------------------------------------------------------------+
+//  | Navigator                                                              |
+//  +------------------------------------------------------------------------+
+if (empty($nav['name']) == false) {
+	if (count($nav['name']) == 1 )	echo '<span class="nav_home"></span>' . "\n";
+	else {
+	echo '<span class="nav_tree">' . "\n";
+	for ($i=0; $i < count($nav['name']); $i++) {
+		if ($i > 0)								echo '<span class="nav_seperation">></span>' . "\n";
+		if (empty($nav['url'][$i]) == false)	echo '<a href="' . $nav['url'][$i] . '">' . html($nav['name'][$i]) . '</a>' . "\n";
+		else									echo html($nav['name'][$i]) . "\n";
+	}
+	echo '</span>' . "\n";
+	}
+}
+
+
+
+?>

@@ -1,6 +1,10 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | netjukebox, Copyright © 2001-2015 Willem Bartels                       |
+//  | O!MPD, Copyright © 2015 Artur Sierzant		                         |
+//  | http://www.ompd.pl                                             		 |
+//  |                                                                        |
+//  |                                                                        |
+//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -25,14 +29,21 @@
 //  +------------------------------------------------------------------------+
 //  | image.php                                                              |
 //  +------------------------------------------------------------------------+
+
+//error_reporting(-1);
+//ini_set('display_errors', 'On');
+
 require_once('include/initialize.inc.php');
 require_once('include/stream.inc.php');
 
-$image_id 	= @$_GET['image_id'];
-$image	 	= @$_GET['image'];
+$image_id 	= get('image_id');
+$track_id 	= get('track_id');
+$quality	= get('quality') == 'hq' ? 'hq' : 'lq';
+//$quality	= 'hq';
+$image	 	= get('image');
 
-if		($image_id)				image($image_id);
-elseif	($image)				resampleImage($image);
+if		(isset($image_id))		image($image_id, $quality, $track_id);
+elseif	(isset($image))			resampleImage($image);
 elseif	($cfg['image_share'])	shareImage();
 exit();
 
@@ -42,13 +53,97 @@ exit();
 //  +------------------------------------------------------------------------+
 //  | Image                                                                  |
 //  +------------------------------------------------------------------------+
-function image($image_id) {
+function image($image_id, $quality, $track_id) {
 	global $cfg, $db;
-	$query  = mysqli_query($db, 'SELECT image FROM bitmap WHERE image_id = "' . mysqli_real_escape_string($db, $image_id) . '" LIMIT 1');
-	$bitmap = mysqli_fetch_assoc($query) or imageError();
+	require_once('getid3/getid3/getid3.php');
+	/* $query  = mysql_query('SELECT image, image_front FROM bitmap WHERE image_id = "' . mysql_real_escape_string($image_id) . '" LIMIT 1');
+	$bitmap = mysql_fetch_assoc($query) or imageError(); */
 	
-	header('Cache-Control: max-age=31536000');
-	streamData($bitmap['image'], 'image/jpeg', false, false, '"never_expire"');	
+	if (!empty($track_id)) 
+	$query  = mysql_query('SELECT bitmap.image, bitmap.image_front, track.relative_file, track.track_id, bitmap.image_id  FROM bitmap LEFT JOIN track on bitmap.album_id = track.album_id WHERE bitmap.image_id = "' . mysql_real_escape_string($image_id) . '" AND track.track_id = "' . mysql_real_escape_string($track_id) . '" LIMIT 1');
+
+	else
+	$query  = mysql_query('SELECT bitmap.image, bitmap.image_front, bitmap.image_id, track.relative_file  FROM bitmap LEFT JOIN track on bitmap.album_id = track.album_id WHERE bitmap.image_id = "' . mysql_real_escape_string($image_id) . '" LIMIT 1');
+	
+	$bitmap = mysql_fetch_assoc($query) or imageError();
+	
+	//get embedded picture for misc tracks
+	if ((!empty($track_id)) && ((strpos(strtolower($bitmap['relative_file']), strtolower($cfg['misc_tracks_folder'])) !== false) || (strpos(strtolower($bitmap['relative_file']), strtolower($cfg['misc_tracks_misc_artists_folder'])) !== false))) {
+		// Initialize getID3
+		$getID3 = new getID3;
+		//initial settings for getID3:
+		include 'include/getID3init.inc.php';
+		$path2file = $cfg['media_dir'] . $bitmap['relative_file'];
+		$getID3->analyze($path2file);
+		
+		if (isset($getID3->info['error']) == false &&
+			isset($getID3->info['comments']['picture'][0]['image_mime']) &&
+			isset($getID3->info['comments']['picture'][0]['data']) &&
+			($getID3->info['comments']['picture'][0]['image_mime'] == 'image/jpeg' || $getID3->info['comments']['picture'][0]['image_mime'] == 'image/png')) {
+				$redImg = $getID3->info['comments']['picture'][0]['data'];
+				header('Cache-Control: max-age=31536000');
+				streamData($redImg, 'image/jpeg', false, false, '"never_expire"');	
+		}
+		else {
+			/* $image = imagecreatefromjpeg(NJB_HOME_DIR . 'image/misc_image.jpg');
+			header("Content-type: image/jpeg");
+			imagejpeg($image);
+			imagedestroy($image); */
+			header('Cache-Control: max-age=31536000');
+			streamData($bitmap['image'], 'image/jpeg', false, false, '"never_expire"');
+		}
+		
+	}
+	elseif ($bitmap['image_front'] == '') {
+		header('Cache-Control: max-age=31536000');
+		streamData($bitmap['image'], 'image/jpeg', false, false, '"never_expire"');
+	}
+	elseif ($quality == 'hq') {
+		if (strpos($bitmap['image_front'],"misc_image.jpg") === false){ 
+			$path2file = $cfg['media_dir'] . $bitmap['image_front'];
+			if (is_file($path2file)) {
+				$image = imagecreatefromjpeg($path2file);
+				header("Content-type: image/jpeg");
+				imagejpeg($image);
+				imagedestroy($image);
+			}
+			elseif (strpos($bitmap['image_id'],"no_image") !== false) {
+				$image = imagecreatefromjpeg(NJB_HOME_DIR . 'image/no_image.jpg');
+				header("Content-type: image/jpeg");
+				imagejpeg($image);
+				imagedestroy($image);
+			}
+			else {
+				//$image = imagecreatefromjpeg('image/no_image.jpg');
+				header('Cache-Control: max-age=31536000');
+				streamData($bitmap['image'], 'image/jpeg', false, false, '"never_expire"');	
+			}
+		}
+		else {
+			if (is_file(NJB_HOME_DIR . 'image/misc_image.jpg')) {
+				$image = imagecreatefromjpeg(NJB_HOME_DIR . 'image/misc_image.jpg');
+				header("Content-type: image/jpeg");
+				imagejpeg($image);
+				imagedestroy($image);
+			}
+			else imageError();
+		}			
+	}
+	else {
+		/* $nFile = str_replace('folder.jpg', 'th_folder.jpg',$bitmap['image_front']);
+		if (file_exists($cfg['media_dir'] . $nFile)) {
+			$image = imagecreatefromjpeg($cfg['media_dir'] . $nFile);
+			header("Content-type: image/jpeg");
+			imagejpeg($image);
+			imagedestroy($image);		
+		}
+		else {
+		 */
+		header('Cache-Control: max-age=31536000');
+		streamData($bitmap['image'], 'image/jpeg', false, false, '"never_expire"');	
+		//}
+	}
+	
 }
 
 
@@ -81,7 +176,7 @@ function resampleImage($image, $size = NJB_IMAGE_SIZE) {
 			$extension = 'png';
 		}
 		else
-			imageError();
+			imageCreateFromPng('image/image_error.png');
 		
 	}
 	
@@ -113,7 +208,7 @@ function resampleImage($image, $size = NJB_IMAGE_SIZE) {
 	}
 	imageDestroy($src_image);
 	
-	header('Cache-Control: max-age=900');
+	header('Cache-Control: max-age=600');
 	streamData($data, 'image/jpeg');
 }
 
@@ -127,31 +222,28 @@ function shareImage() {
 	global $cfg, $db;
 	
 	if ($cfg['image_share_mode'] == 'played') {
-		$query = mysqli_query($db, 'SELECT image, artist, album, filesize, filemtime, album.album_id
+		$query = mysql_query('SELECT image, artist, album, filesize, filemtime, album.album_id
 			FROM counter, album, bitmap
 			WHERE counter.flag <= 1
 			AND counter.album_id = album.album_id
 			AND counter.album_id = bitmap.album_id
 			ORDER BY counter.time DESC
 			LIMIT 1');
-		$bitmap = mysqli_fetch_assoc($query);
+		$bitmap = mysql_fetch_assoc($query);
 		$text	=  'Recently played:';
 	}
 	else {
-		$query	= mysqli_query($db, 'SELECT image, artist, album, filesize, filemtime, album.album_id
+		$query	= mysql_query('SELECT image, artist, album, filesize, filemtime, album.album_id
 			FROM album, bitmap 
 			WHERE album.album_id = bitmap.album_id 
 			ORDER BY album_add_time DESC
 			LIMIT 1');
-		$bitmap = mysqli_fetch_assoc($query);
+		$bitmap = mysql_fetch_assoc($query);
 		$text	=  'New album:';
 		$cfg['image_share_mode'] = 'new';
 	}
 	
-	$hash_data = $cfg['image_share_mode'] . $bitmap['album_id'] . $bitmap['filemtime'];
-	$hash_data .= filemtime('image/share.png') . filemtime('image.php');
-	
-	$etag = '"' . md5($hash_data) . '"';
+	$etag = '"' . md5($bitmap['album_id'] . $cfg['image_share_mode'] . $bitmap['filemtime'] . '-' . $bitmap['filesize'] . '-' . filemtime('image/share.png')) . '"';
 	if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && $_SERVER['HTTP_IF_NONE_MATCH'] == $etag) {
 		header('HTTP/1.1 304 Not Modified');
 		header('ETag: ' . $etag);
@@ -168,12 +260,11 @@ function shareImage() {
 	imageDestroy($src_image);
 	
 	// Text
-	$font_color	= imagecolorallocate($dst_image, 0, 0, 99);
-	$font 		= NJB_HOME_DIR . 'fonts/Roboto-Medium.ttf';
-	imagettftext($dst_image, 10, 0, 55, 13, $font_color, $font, $text);
-	$font		= NJB_HOME_DIR . 'fonts/Roboto-Regular.ttf';
-	imagettftext($dst_image, 10, 0, 55, 30, $font_color, $font, $bitmap['artist']);
-	imagettftext($dst_image, 10, 0, 55, 47, $font_color, $font, $bitmap['album']);
+	$font		= NJB_HOME_DIR . 'fonts/DejaVuSans.ttf';
+	$font_color = imagecolorallocate($dst_image, 0, 0, 99);
+	imagettftext($dst_image, 8, 0, 55, 13, $font_color, $font, $text);
+	imagettftext($dst_image, 8, 0, 55, 30, $font_color, $font, $bitmap['artist']);
+	imagettftext($dst_image, 8, 0, 55, 47, $font_color, $font, $bitmap['album']);
 	
 	// For to long text overwrite 4 pixels right margin
 	$src_image = imageCreateFromPng('image/share.png');
@@ -200,6 +291,8 @@ function shareImage() {
 //  +------------------------------------------------------------------------+
 function imageError() {
 	$etag = '"image_error_' . dechex(filemtime('image/image_error.png')) . '"';
+	//$etag = "never_expire";
 	streamData(file_get_contents('image/image_error.png'), 'image/png', false, false, $etag);
 	exit();
 }
+?>
