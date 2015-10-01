@@ -332,6 +332,7 @@ CREATE TABLE IF NOT EXISTS `track` (
   `dr` tinyint(3) unsigned  DEFAULT NULL,
   KEY `artist` (`artist`),
   KEY `title` (`title`),
+  KEY `featuring` (`featuring`),
   KEY `audio_dataformat` (`audio_dataformat`),
   KEY `video_dataformat` (`video_dataformat`),
   KEY `album_id` (`album_id`,`disc`),
