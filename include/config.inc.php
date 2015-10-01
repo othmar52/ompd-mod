@@ -672,4 +672,12 @@ $cfg['php_info']                    = false;
 //  | For testing some stuff (on my system only) - should be set to off      |
 //  +------------------------------------------------------------------------+
 $cfg['testing']				= "off";
-?>
+
+
+
+//  +------------------------------------------------------------------------+
+//  | include gitignored config for local ompd-instance                      |
+//  +------------------------------------------------------------------------+
+if(file_exists(NJB_HOME_DIR . 'include/config.local.inc.php') === TRUE) {
+	require_once(NJB_HOME_DIR . 'include/config.local.inc.php');
+}
