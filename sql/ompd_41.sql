@@ -167,11 +167,11 @@ CREATE TABLE IF NOT EXISTS `favoriteitem` (
 --
 
 CREATE TABLE IF NOT EXISTS `genre` (
-  `genre_id` varchar(10) NOT NULL DEFAULT '',
+  `genre_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `genre` varchar(255) NOT NULL DEFAULT '',
   `updated` tinyint(4) NOT NULL DEFAULT '0',
-  KEY `genre` (`genre`),
-  KEY `genre_id` (`genre_id`)
+  PRIMARY KEY `genre_id` (`genre_id`),
+  KEY `genre` (`genre`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -299,7 +299,7 @@ CREATE TABLE IF NOT EXISTS `track` (
   `artist` varchar(255) NOT NULL DEFAULT '',
   `title` varchar(255) NOT NULL DEFAULT '',
   `featuring` varchar(255) NOT NULL DEFAULT '',
-  `relative_file` varchar(255) NOT NULL DEFAULT '',
+  `relative_file` text NOT NULL,
   `mime_type` varchar(64) NOT NULL DEFAULT '',
   `filesize` bigint(20) unsigned NOT NULL DEFAULT '0',
   `filemtime` int(10) unsigned NOT NULL DEFAULT '0',
@@ -332,7 +332,6 @@ CREATE TABLE IF NOT EXISTS `track` (
   `dr` tinyint(3) unsigned  DEFAULT NULL,
   KEY `artist` (`artist`),
   KEY `title` (`title`),
-  KEY `relative_file` (`relative_file`),
   KEY `audio_dataformat` (`audio_dataformat`),
   KEY `video_dataformat` (`video_dataformat`),
   KEY `album_id` (`album_id`,`disc`),
@@ -342,6 +341,9 @@ CREATE TABLE IF NOT EXISTS `track` (
   KEY `transcoded` (`transcoded`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+ALTER TABLE `track`
+  ADD FULLTEXT KEY `relative_file` (`relative_file`);
+  
 -- --------------------------------------------------------
 
 --
@@ -393,13 +395,16 @@ CREATE TABLE IF NOT EXISTS `update_progress` (
 
 CREATE TABLE IF NOT EXISTS `album_id` (
   `album_id` varchar(14) NOT NULL,
-  `path` varchar(255) NOT NULL,
+  `path` text NOT NULL,
   `album_add_time` int(10) unsigned NOT NULL,
   `updated` tinytext NOT NULL,
   UNIQUE KEY `album_id` (`album_id`),
   KEY `album` (`album_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+ALTER TABLE `track`
+  ADD FULLTEXT KEY `path` (`path`);
+  
 -- --------------------------------------------------------
 
 --
@@ -675,3 +680,12 @@ INSERT INTO `server` VALUES ('image_quality', '0');
 INSERT INTO `server` VALUES ('image_size', '0');
 INSERT INTO `server` VALUES ('latest_version', '');
 INSERT INTO `server` VALUES ('latest_version_idle_time', '0');
+
+
+-- --------------------------------------------------------
+
+-- 
+-- Default genre
+--
+
+INSERT INTO `genre` VALUES ('1', 'Unknown', '1');
