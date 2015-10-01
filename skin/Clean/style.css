@@ -1,0 +1,1322 @@
+/*  +------------------------------------------------------------------------+
+    | style.css                                                              |
+    +------------------------------------------------------------------------+ */
+@font-face {
+	/* http://fonts.googleapis.com/css?family=Roboto:300 */
+	font-family: 'Roboto';
+	font-style: normal;
+	font-weight: 300;
+	src: local('Roboto Light'), local('Roboto-Light'),
+	url(//fonts.gstatic.com/s/roboto/v15/Hgo13k-tfSpn0qi1SFdUfZBw1xU1rKptJj_0jans920.woff2) format('woff2'),
+	url(//fonts.gstatic.com/s/roboto/v15/Hgo13k-tfSpn0qi1SFdUfbO3LdcAZYWl9Si6vvxL-qU.woff) format('woff'),
+	url(fonts/Roboto-Light.woff2?nrordj) format('woff2'),
+	url(fonts/Roboto-Light.woff?nrorgs) format('woff');
+}
+
+
+@font-face {
+	/* http://fonts.googleapis.com/css?family=Roboto:400&subset=cyrillic-ext,latin,greek-ext,greek,vietnamese,latin-ext,cyrillic */
+	font-family: 'Roboto';
+	font-style: normal;
+	font-weight: 400;
+	src: local('Roboto'), local('Roboto-Regular'),
+	url(//fonts.gstatic.com/s/roboto/v15/Tc9Dk7UP-O5wKOy5yWA_gPesZW2xOQ-xsNqO47m55DA.woff2) format('woff2'),
+	url(//fonts.gstatic.com/s/roboto/v15/xZQOmYg4x3YaWkTJi1kErvesZW2xOQ-xsNqO47m55DA.woff) format('woff'),
+	url(fonts/Roboto-Regular.woff2?nq7fxm) format('woff2'),
+	url(fonts/Roboto-Regular.woff?nq7fyq) format('woff');
+}
+
+
+@font-face {
+	/* http://fonts.googleapis.com/css?family=Roboto:500&subset=cyrillic-ext,latin,greek-ext,greek,vietnamese,latin-ext,cyrillic */
+	font-family: 'Roboto';
+	font-style: normal;
+	font-weight: 500;
+	src: local('Roboto Medium'), local('Roboto-Medium'),
+	url(//fonts.gstatic.com/s/roboto/v15/STYvRtFxlyQ3QwUGcR_IQgLUuEpTyoUstqEm5AMlJo4.woff2) format('woff2'),
+	url(//fonts.gstatic.com/s/roboto/v15/GqZzxBO7MNkGbGZuh9cULALUuEpTyoUstqEm5AMlJo4.woff) format('woff'),
+	url(fonts/Roboto-Medium.woff2?nq7g21) format('woff2'),
+	url(fonts/Roboto-Medium.woff?nq7g3l) format('woff');
+}
+
+
+html,
+body {
+	margin: 0;
+	padding: 0;	
+	height: 100%;
+	color: black;
+	font: 13px Roboto, Arial, Helvetica, sans-serif;
+	font-weight: 400;
+}
+
+
+#menu,
+a.button {
+	font-size: 16px;
+	font-weight: 300;
+}
+
+
+strong {
+	font-weight: 500;
+}
+
+
+#wrapper_container {
+	min-height: 100%;
+	position: relative;
+	background: #FFFFFF;
+	background-image: url(img/background.png?m51tuq);
+	background-repeat: repeat-x;
+	overflow: auto;
+}
+
+
+#menu_container {
+	background-image: url(img/sprite_menu@2x.png?nkhc8a);
+	background-size: 206px 298px;
+	height: 73px;
+	background-repeat: repeat-x;
+}
+
+
+#menu_container a.netjukebox {
+	background-image: url(img/sprite_menu@2x.png?nkhc8a);
+	background-size: 206px 298px;
+	background-position: 0 -250px;
+	width: 206px; height: 48px;
+	position: absolute;
+	top: 0; right: 0;
+}
+
+
+#content_container {
+	margin-top: 20px;
+	margin-left: 10px;
+	margin-right: 10px;
+	margin-bottom: 40px; /* Height of the footer 30px + ..px */
+}
+
+
+#footer_container {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	height: 30px; /* Height of the footer */
+}
+    
+
+#menu, #submenu, #navigator, #loginform, #footer, #playlist_container, #playlist_control, #playlist_text, #tab {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+
+a, 
+#tab li {
+	color: #2B5980;
+	text-decoration: none;
+}
+
+
+a:hover, 
+#tab li:hover {
+	color: #0099FF;
+	text-decoration: underline;
+}
+
+
+a.button {
+	display: inline-block;
+	vertical-align: middle;
+	background-image: url(img/sprite_menu@2x.png?nkhc8a);
+	background-size: 206px 298px;
+	background-position: -100px -150px;
+	width: 106px;
+	height: 26px;
+	line-height: 26px; /* Align text vertical */
+	color: white;
+	text-align: center;
+}
+
+
+a.smallbutton {
+	display: inline-block;
+	vertical-align: middle;
+	background-image: url(img/sprite_menu@2x.png?nkhc8a);
+	background-size: 206px 298px;
+	background-position: -100px -100px;
+	width: 63px;
+	height: 15px;
+	line-height: 15px; /* Align text vertical */
+	color: white;
+	text-align: center;
+	font-size: 12px;
+}
+
+
+a.button:hover,
+a.smallbutton:hover,
+tr.footer a.smallbutton:hover /* to override tr.footer a:hover */ {
+	color: white;
+	text-decoration: none;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Menu                                                                   |
+    +------------------------------------------------------------------------+ */
+#menu {
+	position: absolute;
+	top: 24px;
+	left: 23px;
+	height: 24px;
+	overflow: hidden;
+	z-index: 10; /* above netjukebox logo */
+}
+
+
+#menu li {
+	float: left;
+	width: 88px;
+	padding-right: 4px;
+	line-height: 24px; /* Align text vertical */
+	text-align: center;
+	background-image: url(img/sprite_menu@2x.png?nkhc8a);
+	background-size: 206px 298px;
+}
+
+
+#menu li.off	{ background-position: 0 -100px; }
+#menu li.off a	{ color: white; }
+
+
+#menu li.on		{ background-position: 0 -150px; }
+#menu li.on a	{ color: #2B5980; }
+
+
+#menu li a {
+	display: block;
+	height: 24px;
+	text-decoration: none;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Sub menu                                                               |
+    +------------------------------------------------------------------------+ */
+#submenu {
+	position: absolute;
+	left: 20px;
+	top: 48px;
+	white-space: nowrap;
+}
+
+
+#submenu li {
+	display: inline;
+	height: 24px;
+	line-height: 24px; /* Align text vertical */
+	border-left: 1px solid #CCCCCC;
+}
+
+
+#submenu li:first-child {
+	border-left: none;
+}
+
+
+#submenu li.character a {
+	/* make text including width clickable */
+	width: 24px;
+	padding-left: 0px;
+	padding-right: 0px;
+	text-align: center;
+}
+
+
+#submenu li a {
+	/* make text including padding clickable */
+	display: inline-block;	
+	padding-left: 8px;
+	padding-right: 8px;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Navigator                                                              |
+    +------------------------------------------------------------------------+ */
+#navigator {
+	margin-bottom: 20px;
+	height: 26px;
+	overflow: hidden;
+}
+
+
+#navigator li {
+	float: left;
+	line-height: 26px; 
+	background-image: url(img/sprite_navigator.png?mv990m);
+}
+
+
+#navigator li.nav {
+	background-repeat: repeat-x;
+	font-weight: 500;
+}
+
+
+#navigator li.suggest {
+	background-position: 0 -50px;
+}
+
+
+#navigator li.home 				{ background-position: 0 -150px; width: 10px; }
+#navigator li.nav_nav			{ background-position: 0 -100px; width: 20px; }
+#navigator li.nav_suggest		{ background-position: -20px -100px; width: 20px; }
+#navigator li.suggest_suggest	{ background-position: -40px -100px; width: 20px; }
+#navigator li.suggest_nav		{ background-position: -60px -100px; width: 20px; }
+#navigator li.nav_close			{ background-position: -40px -150px; width: 20px; }
+#navigator li.suggest_close		{ background-position: -60px -150px; width: 10px; }
+
+
+#navigator li span,
+#navigator li a {
+	display: block;
+	padding-left: 2px;
+	padding-right: 2px;	
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Tab                                                                    |
+    +------------------------------------------------------------------------+ */
+#tab {
+	margin-left: 10px;
+}
+
+
+#tab li {
+	float: left;
+	display: block;
+	width: 100px;
+	height: 21px;
+	line-height: 22px; /* hold the same verticle text alignment (height + 1px) */
+	background: #B5D0DD;
+	border: 1px solid #2B5980;
+	border-bottom-width: 0;
+	text-align: center;
+	margin-right: 10px;
+	cursor: pointer;
+}
+
+
+#tab li.on {
+	position: relative;
+	top: 1px;
+	line-height: 20px; /* hold the same verticle text alignment (height - 1px) */
+	background: #5181A6;
+	color: white;
+	font-weight: 500;
+}
+
+
+table.tab {
+	clear: left;
+	width: 100%;
+	border: 1px solid #2B5980;
+	background-color: #5181A6;	
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Playlist controle                                                      |
+    +------------------------------------------------------------------------+ */
+#playlist_container {
+	border: 1px solid #2B5980;
+}
+
+
+#playlist_container div#image{
+	width: 100px;
+	height: 100px;
+	border-right: 1px solid #2B5980;
+	float: left;
+}
+
+
+#playlist_text {
+	height: 100px;
+}
+
+
+	
+#playlist_text li{
+	height: 25px;
+	line-height: 25px; /* Align text vertical */
+}
+
+
+
+#playlist_text li.odd {
+	background-color: #EAF1F4;	
+}
+
+
+#playlist_text li.even {
+	background-color: #FFFFFF;	
+}
+
+
+
+#playlist_text li .description {
+	display: inline-block;
+	margin-left: 10px;
+	width: 65px;
+}
+
+
+#playlist_control {
+	background-image: url(img/sprite_playlist.png?mvfxtc);
+	background-repeat: repeat-x;
+	height: 21px;
+	border-left: 1px solid #2B5980;
+	border-bottom: 1px solid #2B5980;
+	border-right: 1px solid #2B5980;
+	overflow: hidden;
+	margin-bottom: 20px;
+}
+
+
+#playlist_control li,
+#playlist_control li div {
+	background-image: url(img/sprite_playlist.png?mvfxtc);
+	float: left;
+	width: 50px;
+	height: 21px;
+	text-indent: -9999px;
+}
+
+
+#playlist_control li.previous				{ background-position: 0 -200px; }
+#playlist_control li.next					{ background-position: -50px -200px; }
+#playlist_control li.stop					{ background-position: -100px -200px; }
+#playlist_control li.display				{ background-position: -150px -200px; width: 60px;}
+
+
+#playlist_control li.shuffle.off			{ background-position: 0 -250px; }
+#playlist_control li.shuffle.on				{ background-position: 0 -300px; }
+#playlist_control li.repeat.off				{ background-position: 0 -250px; }
+#playlist_control li.repeat.on				{ background-position: 0 -300px; }
+#playlist_control li.gain.off				{ background-position: 0 -250px; }
+#playlist_control li.gain.album				{ background-position: 0 -300px; }
+#playlist_control li.gain.track				{ background-position: 0 -300px; }
+#playlist_control li.gain.fade				{ background-position: 0 -300px; }
+
+
+#playlist_control li.play.off				{ background-position: -50px -250px; }
+#playlist_control li.play.on				{ background-position: -50px -300px; }
+#playlist_control li.pause.off				{ background-position: -100px -250px; }
+#playlist_control li.pause.on				{ background-position: -100px -300px; }
+
+
+#playlist_control li.progress				{ background-position: 0 -50px; width: 210px;}
+#playlist_control li.progress div.input		{ background-position: 0 -21px; width: 200px; margin-left: 5px;}
+#playlist_control li.progress div.on		{ background-position: 0 -100px; width: 0px; overflow: hidden; }
+#playlist_control li.progress div.off		{ background-position: 0 -150px; width: 0px; overflow: hidden; }
+
+
+#playlist_control li.shuffle,
+#playlist_control li.repeat,
+#playlist_control li.gain {
+	text-indent: 15px;
+	line-height: 21px; /* Align text vertical */
+	font-size: 11px;
+	color: #CAD2EC;
+}
+
+
+#playlist_control li.display {
+	text-indent: 0;
+	text-align: center;
+	line-height: 21px; /* Align text vertical */	
+	font-size: 12px;
+	font-weight: 500;
+	color: #CAD2EC;
+}
+
+
+#playlist_control li.onclick {
+	color: white;
+	cursor: pointer;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Footer                                                                 |
+    +------------------------------------------------------------------------+ */
+#footer {
+	text-align: center;
+	white-space: nowrap;
+}
+
+
+#footer li {
+	display: inline;
+	line-height: 30px; /* Align text vertical */	
+	font-size: 11px;	
+	border-right: 1px solid #CCCCCC;
+	
+}
+
+
+#footer li:first-child {
+	padding-left: 3px;
+	border-left: 1px solid #CCCCCC;
+}
+
+
+#footer li span,
+#footer li a {
+	/* make text including padding clickable */
+	display: inline-block;
+	padding-left: 6px;
+	padding-right: 6px;	
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Bottom space                                                           |
+    +------------------------------------------------------------------------+ */
+.bottom_space {
+	margin-bottom: 20px;
+}
+
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Bar                                                                    |
+    +------------------------------------------------------------------------+ */
+.bar,
+.bar div {
+	background-image: url(img/sprite_bar.png?muyz90);
+	height: 21px;
+	display: block;
+}
+
+
+.bar {
+	background-position: 0 0;
+	width: 102px;
+	
+}
+
+
+.bar div {
+	background-position: 0 -21px;
+	width: 0px;
+	margin-left: 1px;
+	float: left;
+	overflow: hidden;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Tooltip                                                                |
+    +------------------------------------------------------------------------+ */
+#tooltip {
+	padding: 5px;
+	border: 1px solid #2B5980;
+	border-radius: 8px;
+	border-top-left-radius: 0;
+	background: #B5D0DD;
+	opacity: 0.95;
+	font-size: 12px;
+	position: absolute;
+	left: -9999px;
+	top: -9999px;
+	z-index: 1000;
+	display: none;
+}
+
+
+#tooltip hr {
+	border: none;
+	height: 1px;
+	background-color: #2B5980;
+	margin-top: 5px;
+	margin-bottom: 4px;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | BBCode                                                                 |
+    +------------------------------------------------------------------------+ */
+ul.bbcode {
+	margin-top: 2px;
+	margin-bottom: 0;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Form                                                                   |
+    +------------------------------------------------------------------------+ */
+form,
+input,
+select {
+	margin: 0;
+	font-size: 13px;
+	vertical-align: middle;
+}
+
+
+input[type="text"],
+input[type="password"],
+select {
+	padding: 2px 2px;
+	border: solid 1px #2B5980;
+}
+
+
+input.short,
+select.short {
+	width: 150px;
+}
+
+
+input.edit {
+	width: 350px;
+}
+
+
+input.autosugest,
+select.autosugest {
+	width: 380px;
+}
+
+
+input.readonly,
+select.readonly {
+	background: #B6D0DC;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Login form                                                             |
+    +------------------------------------------------------------------------+ */
+#loginform {
+	margin: 140px auto 0; /* Align */
+	width: 250px;
+	padding: 15px;
+	border: solid 2px #2B5980;
+	background: #B6D0DC;
+	border-radius: 8px;
+}
+
+
+#loginform .description {
+	/* display: block; */
+	float: left;
+	line-height: 22px; /* Align text vertical */
+	font-weight: 500;
+	text-align: right;
+	width: 80px;	
+}
+
+
+#loginform .input {
+	float: left;
+	width: 150px;
+	margin: 0 0 10px 10px;
+}
+
+
+#loginform button {
+	width: 75px;
+	height: 28px;
+	background: #EBF2F5;
+	cursor: pointer;	
+	font-size: 11px;
+	font-weight: 500;
+	margin: 0 0 10px 10px;
+}
+
+
+#loginform div.footer {
+	font-size: 12px;
+	border-top: solid 1px #2B5980;
+	padding-top: 10px;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Logout form                                                            |
+    +------------------------------------------------------------------------+ */
+#logoutform {
+	margin: 140px auto 0; /* Align */
+	width: 250px;
+	padding: 15px;
+	border: solid 2px #2B5980;
+	background: #B6D0DC;
+	border-radius: 8px;
+}
+
+
+#logoutform label {
+	display: block;
+	/* float: left; */
+	width: 250px;
+	margin: 0 0 10px 0;
+}
+
+
+#logoutform button {
+	width: 75px;
+	height: 28px;
+	background: #EBF2F5;
+	cursor: pointer;	
+	font-size: 11px;
+	font-weight: 500;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Table                                                                  |
+    +------------------------------------------------------------------------+ */
+table {
+	border-spacing: 0; /* <table cellspacing="0"> */
+	
+}
+
+
+th, td {
+	padding: 0; /* <table cellpadding="0"> */
+}
+
+
+td.text-align-right {
+	text-align: right; /* <td align="right"> */
+}
+
+
+td.text-align-center {
+	text-align: center; /* <td align="center"> */
+}
+
+
+td.vertical-align-top {
+	vertical-align: top;
+}
+
+
+table.border {
+	border: 1px solid #2B5980;
+}
+
+
+td.vertical_line {
+	/* *** ONLY NEEDED IN VIEW3 *** */
+	width: 1px;
+	background-color: #2B5980;
+}
+
+
+td.nowrap,
+tr.nowrap td {
+	white-space: nowrap;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Table header, section & footer                                         |
+    +------------------------------------------------------------------------+ */
+tr.header,
+tr.section,
+tr.footer {
+	color: #B6D0DC;
+}
+
+
+tr.header a,
+tr.section a,
+tr.footer a {
+	color: white;
+}
+
+
+tr.header a:hover,
+tr.section a:hover,
+tr.footer a:hover {
+	color: #B5D0DD;
+}
+
+
+tr.header {
+	height: 22px; /* = 21px + 1px border*/
+	font-weight: 500;
+	background-image: url(img/small_header.png?llijbi);
+	background-repeat: repeat-x;
+	background-position: top; 
+}
+
+
+tr.header td {
+	border-bottom: 1px solid #2B5980;
+	white-space: nowrap;	
+}
+
+
+tr.section {
+	height: 23px; /* = 21px + 2px border*/
+	font-weight: 500;
+	background-image: url(img/small_header.png?llijbi);
+	background-repeat: repeat-x;
+	background-position: center; 	
+}
+
+
+tr.section td {
+	border-top: 1px solid #2B5980;
+	border-bottom: 1px solid #2B5980;
+	white-space: nowrap;
+}
+
+
+tr.footer {
+	height: 22px; /* = 21px + 1px border*/
+	font-size: 12px;
+	background-color: #2B5980;
+}
+
+
+tr.footer td {
+	border-top: 1px solid #2B5980;
+	white-space: nowrap;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Table odd, even, select & mouseover                                    |
+    +------------------------------------------------------------------------+ */
+tr.odd {
+	height: 21px;
+	background-color: #EAF1F4;
+}
+
+
+tr.odd_ok {
+	height: 21px;
+	background-color: #E9FFE9;
+}
+
+
+tr.odd_error {
+	height: 21px;
+	background-color: #FFEAEA;
+}
+
+
+tr.even {
+	height: 21px;
+	background-color: #FFFFFF;
+}
+
+
+tr.select {
+	height: 21px;
+	background-color: #9DFF9D;
+}
+
+
+tr.mouseover:hover {
+	background-color: #B6D0DC;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Table ok, warning & error                                              |
+    +------------------------------------------------------------------------+ */
+table.ok {
+	margin: 140px auto 0; /* Align */
+	border-spacing: 10px;
+	border: 2px solid #529600;
+	background-color: #EFFFD6;
+	border-radius: 8px;
+}
+
+
+table.ok a {
+	color: #529600;
+	text-decoration: underline;
+}
+
+
+table.ok td { 
+	vertical-align: top;
+}
+
+
+table.ok div.debug {
+	margin-top: 10px;
+	border-top: solid 1px #529600;
+	padding-top: 10px;
+}
+
+
+table.warning {
+	margin: 140px auto 0; /* Align */
+	border-spacing: 10px;
+	border: 2px solid #2B5980;
+	background-color: #B6D0DC;
+	border-radius: 8px;
+}
+
+
+table.warning a {
+	color: #42559C;
+	text-decoration: underline;
+}
+
+
+table.warning td { 
+	vertical-align: top;
+}
+
+
+table.warning div.debug {
+	margin-top: 10px;
+	border-top: solid 1px #2B5980;
+	padding-top: 10px;
+}
+
+
+table.error {
+	margin: 140px auto -9999px; /* Align */
+	border-spacing: 10px;
+	border: 2px solid Red;
+	background-color: #FFA4A4;
+	border-radius: 8px;
+}
+
+
+table.error a {
+	color: Red;
+	text-decoration: underline;
+}
+
+
+table.error td { 
+	vertical-align: top;
+}
+
+
+table.error div.debug {
+	margin-top: 10px;
+	border-top: solid 1px Red;
+	padding-top: 10px;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Table various                                                          |
+    +------------------------------------------------------------------------+ */
+tr.list {
+	height: 54px;
+}
+
+
+td.update_text {
+	width: 140px;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Table space & align                                                    |
+    +------------------------------------------------------------------------+ */
+td.smallspace {
+	width: 5px;
+}
+
+
+td.space {
+	width: 10px;
+}
+
+
+td.textspace {
+	width: 30px;
+}
+
+
+td.matrix {
+	width: 65px;
+	text-align: center;
+}
+
+
+tr.smallspace {
+	/* vertical space */
+	height: 5px;
+}
+
+
+tr.space {
+	/* vertical space */
+	height: 10px;
+}
+
+
+tr.textspace {
+	/* vertical space */
+	height: 21px;
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Image                                                                  |
+    +------------------------------------------------------------------------+ */
+img {
+	border: 0;
+	vertical-align: middle;
+}
+
+
+a.space,
+img.space,
+input.space {
+	margin-right: 5px;
+}
+
+
+img.tiny {
+	width: 10px;
+	height: 10px;
+	margin-left: 3px;
+}
+
+
+img.small {
+	width: 21px;
+	height: 21px;
+}
+
+
+img.small_high {
+	width: 21px;
+	height: 50px;
+}
+
+
+img.medium {
+	width: 32px;
+	height: 32px;
+	margin-right: 10px;
+}
+
+
+img.thumbnail {
+	/* width and height are set in the html */
+	margin: 5px;	
+}
+
+
+
+
+/*  +------------------------------------------------------------------------+
+    | Flag                                                                   |
+    +------------------------------------------------------------------------+ */
+.flag {
+	background-image: url(img/sprite_flag.png?m4w1do);
+	background-repeat: no-repeat;
+	width: 21px;
+	height: 21px;
+	margin-right: 5px;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+
+.flag.uknown{ background-position: 0 0; } 
+.flag.ad	{ background-position: -30px 0; } 
+.flag.ae	{ background-position: -60px 0; } 
+.flag.af	{ background-position: -90px 0; } 
+.flag.ag	{ background-position: -120px 0; } 
+.flag.ai	{ background-position: -150px 0; } 
+.flag.al	{ background-position: -180px 0; } 
+.flag.am	{ background-position: -210px 0; } 
+.flag.an	{ background-position: -240px 0; } 
+.flag.ao	{ background-position: -270px 0; } 
+.flag.ar	{ background-position: -300px 0; } 
+.flag.as	{ background-position: -330px 0; } 
+.flag.at	{ background-position: -360px 0; } 
+.flag.au	{ background-position: -390px 0; } 
+.flag.aw	{ background-position: -420px 0; } 
+.flag.ax	{ background-position: -450px 0; } 
+.flag.az	{ background-position: -480px 0; } 
+.flag.ba	{ background-position: -510px 0; } 
+.flag.bb	{ background-position: -540px 0; } 
+.flag.bd	{ background-position: -570px 0; } 
+.flag.be	{ background-position: -600px 0; } 
+.flag.bf	{ background-position: -630px 0; } 
+.flag.bg	{ background-position: -660px 0; } 
+.flag.bh	{ background-position: -690px 0; } 
+.flag.bi	{ background-position: -720px 0; } 
+.flag.bj	{ background-position: -750px 0; } 
+.flag.bm	{ background-position: -780px 0; } 
+.flag.bn	{ background-position: -810px 0; } 
+.flag.bo	{ background-position: -840px 0; } 
+.flag.br	{ background-position: -870px 0; } 
+.flag.bs	{ background-position: -900px 0; } 
+.flag.bt	{ background-position: -930px 0; } 
+.flag.bv	{ background-position: -960px 0; } 
+.flag.bw	{ background-position: -990px 0; } 
+.flag.by	{ background-position: -1020px 0; } 
+.flag.bz	{ background-position: -1050px 0; } 
+.flag.ca	{ background-position: -1080px 0; } 
+.flag.cc	{ background-position: -1110px 0; } 
+.flag.cd	{ background-position: -1140px 0; } 
+.flag.cf	{ background-position: -1170px 0; } 
+.flag.cg	{ background-position: -1200px 0; } 
+.flag.ch	{ background-position: -1230px 0; } 
+.flag.ci	{ background-position: -1260px 0; } 
+.flag.ck	{ background-position: -1290px 0; } 
+.flag.cl	{ background-position: -1320px 0; } 
+.flag.cm	{ background-position: -1350px 0; } 
+.flag.cn	{ background-position: -1380px 0; } 
+.flag.co	{ background-position: -1410px 0; } 
+.flag.cr	{ background-position: -1440px 0; } 
+.flag.cs	{ background-position: -1470px 0; } 
+.flag.cu	{ background-position: -1500px 0; } 
+.flag.cv	{ background-position: -1530px 0; } 
+.flag.cx	{ background-position: -1560px 0; } 
+.flag.cy	{ background-position: -1590px 0; } 
+.flag.cz	{ background-position: -1620px 0; } 
+.flag.de	{ background-position: -1650px 0; } 
+.flag.dj	{ background-position: -1680px 0; } 
+.flag.dk	{ background-position: -1710px 0; } 
+.flag.dm	{ background-position: -1740px 0; } 
+.flag.do	{ background-position: -1770px 0; } 
+.flag.dz	{ background-position: -1800px 0; } 
+.flag.ec	{ background-position: -1830px 0; } 
+.flag.ee	{ background-position: -1860px 0; } 
+.flag.eg	{ background-position: -1890px 0; } 
+.flag.eh	{ background-position: -1920px 0; } 
+.flag.er	{ background-position: -1950px 0; } 
+.flag.es	{ background-position: -1980px 0; } 
+.flag.et	{ background-position: 0 -30px; } 
+.flag.fi	{ background-position: -30px -30px; } 
+.flag.fj	{ background-position: -60px -30px; } 
+.flag.fk	{ background-position: -90px -30px; } 
+.flag.fm	{ background-position: -120px -30px; } 
+.flag.fo	{ background-position: -150px -30px; } 
+.flag.fr	{ background-position: -180px -30px; } 
+.flag.ga	{ background-position: -210px -30px; } 
+.flag.gb	{ background-position: -240px -30px; } 
+.flag.gd	{ background-position: -270px -30px; } 
+.flag.ge	{ background-position: -300px -30px; } 
+.flag.gf	{ background-position: -330px -30px; } 
+.flag.gh	{ background-position: -360px -30px; } 
+.flag.gi	{ background-position: -390px -30px; } 
+.flag.gl	{ background-position: -420px -30px; } 
+.flag.gm	{ background-position: -450px -30px; } 
+.flag.gn	{ background-position: -480px -30px; } 
+.flag.gp	{ background-position: -510px -30px; } 
+.flag.gq	{ background-position: -540px -30px; } 
+.flag.gr	{ background-position: -570px -30px; } 
+.flag.gs	{ background-position: -600px -30px; } 
+.flag.gt	{ background-position: -630px -30px; } 
+.flag.gu	{ background-position: -660px -30px; } 
+.flag.gw	{ background-position: -690px -30px; } 
+.flag.gy	{ background-position: -720px -30px; } 
+.flag.hk	{ background-position: -750px -30px; } 
+.flag.hm	{ background-position: -780px -30px; } 
+.flag.hn	{ background-position: -810px -30px; } 
+.flag.hr	{ background-position: -840px -30px; } 
+.flag.ht	{ background-position: -870px -30px; } 
+.flag.hu	{ background-position: -900px -30px; } 
+.flag.id	{ background-position: -930px -30px; } 
+.flag.ie	{ background-position: -960px -30px; } 
+.flag.il	{ background-position: -990px -30px; } 
+.flag.in	{ background-position: -1020px -30px; } 
+.flag.io	{ background-position: -1050px -30px; } 
+.flag.iq	{ background-position: -1080px -30px; } 
+.flag.ir	{ background-position: -1110px -30px; } 
+.flag.is	{ background-position: -1140px -30px; } 
+.flag.it	{ background-position: -1170px -30px; } 
+.flag.jm	{ background-position: -1200px -30px; } 
+.flag.jo	{ background-position: -1230px -30px; } 
+.flag.jp	{ background-position: -1260px -30px; } 
+.flag.ke	{ background-position: -1290px -30px; } 
+.flag.kg	{ background-position: -1320px -30px; } 
+.flag.kh	{ background-position: -1350px -30px; } 
+.flag.ki	{ background-position: -1380px -30px; } 
+.flag.km	{ background-position: -1410px -30px; } 
+.flag.kn	{ background-position: -1440px -30px; } 
+.flag.kp	{ background-position: -1470px -30px; } 
+.flag.kr	{ background-position: -1500px -30px; } 
+.flag.kw	{ background-position: -1530px -30px; } 
+.flag.ky	{ background-position: -1560px -30px; } 
+.flag.kz	{ background-position: -1590px -30px; } 
+.flag.la	{ background-position: -1620px -30px; } 
+.flag.lb	{ background-position: -1650px -30px; } 
+.flag.lc	{ background-position: -1680px -30px; } 
+.flag.li	{ background-position: -1710px -30px; } 
+.flag.lk	{ background-position: -1740px -30px; } 
+.flag.lr	{ background-position: -1770px -30px; } 
+.flag.ls	{ background-position: -1800px -30px; } 
+.flag.lt	{ background-position: -1830px -30px; } 
+.flag.lu	{ background-position: -1860px -30px; } 
+.flag.lv	{ background-position: -1890px -30px; } 
+.flag.ly	{ background-position: -1920px -30px; } 
+.flag.ma	{ background-position: -1950px -30px; } 
+.flag.mc	{ background-position: -1980px -30px; } 
+.flag.md	{ background-position: 0 -60px; } 
+.flag.me	{ background-position: -30px -60px; } 
+.flag.mg	{ background-position: -60px -60px; } 
+.flag.mh	{ background-position: -90px -60px; } 
+.flag.mk	{ background-position: -120px -60px; } 
+.flag.ml	{ background-position: -150px -60px; } 
+.flag.mm	{ background-position: -180px -60px; } 
+.flag.mn	{ background-position: -210px -60px; } 
+.flag.mo	{ background-position: -240px -60px; } 
+.flag.mp	{ background-position: -270px -60px; } 
+.flag.mq	{ background-position: -300px -60px; } 
+.flag.mr	{ background-position: -330px -60px; } 
+.flag.ms	{ background-position: -360px -60px; } 
+.flag.mt	{ background-position: -390px -60px; } 
+.flag.mu	{ background-position: -420px -60px; } 
+.flag.mv	{ background-position: -450px -60px; } 
+.flag.mw	{ background-position: -480px -60px; } 
+.flag.mx	{ background-position: -510px -60px; } 
+.flag.my	{ background-position: -540px -60px; } 
+.flag.mz	{ background-position: -570px -60px; } 
+.flag.na	{ background-position: -600px -60px; } 
+.flag.nc	{ background-position: -630px -60px; } 
+.flag.ne	{ background-position: -660px -60px; } 
+.flag.nf	{ background-position: -690px -60px; } 
+.flag.ng	{ background-position: -720px -60px; } 
+.flag.ni	{ background-position: -750px -60px; } 
+.flag.nl	{ background-position: -780px -60px; } 
+.flag.no	{ background-position: -810px -60px; } 
+.flag.np	{ background-position: -840px -60px; } 
+.flag.nr	{ background-position: -870px -60px; } 
+.flag.nu	{ background-position: -900px -60px; } 
+.flag.nz	{ background-position: -930px -60px; } 
+.flag.om	{ background-position: -960px -60px; } 
+.flag.pa	{ background-position: -990px -60px; } 
+.flag.pe	{ background-position: -1020px -60px; } 
+.flag.pf	{ background-position: -1050px -60px; } 
+.flag.pg	{ background-position: -1080px -60px; } 
+.flag.ph	{ background-position: -1110px -60px; } 
+.flag.pk	{ background-position: -1140px -60px; } 
+.flag.pl	{ background-position: -1170px -60px; } 
+.flag.pm	{ background-position: -1200px -60px; } 
+.flag.pn	{ background-position: -1230px -60px; } 
+.flag.pr	{ background-position: -1260px -60px; } 
+.flag.ps	{ background-position: -1290px -60px; } 
+.flag.pt	{ background-position: -1320px -60px; } 
+.flag.pw	{ background-position: -1350px -60px; } 
+.flag.py	{ background-position: -1380px -60px; } 
+.flag.qa	{ background-position: -1410px -60px; } 
+.flag.re	{ background-position: -1440px -60px; } 
+.flag.ro	{ background-position: -1470px -60px; } 
+.flag.rs	{ background-position: -1500px -60px; } 
+.flag.ru	{ background-position: -1530px -60px; } 
+.flag.rw	{ background-position: -1560px -60px; } 
+.flag.sa	{ background-position: -1590px -60px; } 
+.flag.sb	{ background-position: -1620px -60px; } 
+.flag.sc	{ background-position: -1650px -60px; } 
+.flag.sd	{ background-position: -1680px -60px; } 
+.flag.se	{ background-position: -1710px -60px; } 
+.flag.sg	{ background-position: -1740px -60px; } 
+.flag.sh	{ background-position: -1770px -60px; } 
+.flag.si	{ background-position: -1800px -60px; } 
+.flag.sj	{ background-position: -1830px -60px; } 
+.flag.sk	{ background-position: -1860px -60px; } 
+.flag.sl	{ background-position: -1890px -60px; } 
+.flag.sm	{ background-position: -1920px -60px; } 
+.flag.sn	{ background-position: -1950px -60px; } 
+.flag.so	{ background-position: -1980px -60px; } 
+.flag.sr	{ background-position: 0 -90px; } 
+.flag.st	{ background-position: -30px -90px; } 
+.flag.sv	{ background-position: -60px -90px; } 
+.flag.sy	{ background-position: -90px -90px; } 
+.flag.sz	{ background-position: -120px -90px; } 
+.flag.tc	{ background-position: -150px -90px; } 
+.flag.td	{ background-position: -180px -90px; } 
+.flag.tf	{ background-position: -210px -90px; } 
+.flag.tg	{ background-position: -240px -90px; } 
+.flag.th	{ background-position: -270px -90px; } 
+.flag.tj	{ background-position: -300px -90px; } 
+.flag.tk	{ background-position: -330px -90px; } 
+.flag.tl	{ background-position: -360px -90px; } 
+.flag.tm	{ background-position: -390px -90px; } 
+.flag.tn	{ background-position: -420px -90px; } 
+.flag.to	{ background-position: -450px -90px; } 
+.flag.tr	{ background-position: -480px -90px; } 
+.flag.tt	{ background-position: -510px -90px; } 
+.flag.tv	{ background-position: -540px -90px; } 
+.flag.tw	{ background-position: -570px -90px; } 
+.flag.tz	{ background-position: -600px -90px; } 
+.flag.ua	{ background-position: -630px -90px; } 
+.flag.ug	{ background-position: -660px -90px; } 
+.flag.um	{ background-position: -690px -90px; } 
+.flag.us	{ background-position: -720px -90px; } 
+.flag.uy	{ background-position: -750px -90px; } 
+.flag.uz	{ background-position: -780px -90px; } 
+.flag.va	{ background-position: -810px -90px; } 
+.flag.vc	{ background-position: -840px -90px; } 
+.flag.ve	{ background-position: -870px -90px; } 
+.flag.vg	{ background-position: -900px -90px; } 
+.flag.vi	{ background-position: -930px -90px; } 
+.flag.vn	{ background-position: -960px -90px; } 
+.flag.vu	{ background-position: -990px -90px; } 
+.flag.wf	{ background-position: -1020px -90px; } 
+.flag.ws	{ background-position: -1050px -90px; } 
+.flag.ye	{ background-position: -1080px -90px; } 
+.flag.yt	{ background-position: -1110px -90px; } 
+.flag.za	{ background-position: -1140px -90px; } 
+.flag.zm	{ background-position: -1170px -90px; } 
+.flag.zw	{ background-position: -1200px -90px; }
