@@ -170,6 +170,10 @@ echo "\nexiting...\n";
 exit;
 
 
+# TODO: move to somewhere else
+function pathhash($string) {
+	return str_pad(dechex(crc32($string)), 8, '0', STR_PAD_LEFT);
+}
 
 function updateSong($currentSong,
 					$currentDirectory,
@@ -253,21 +257,38 @@ function updateSong($currentSong,
 		LIMIT 1'
 	);
 	if (mysql_num_rows($res) == 0) {
-		mysql_query('INSERT INTO track (artist, title, relative_file, number, album_id, updated, track_id, filemtime, genre, year, disc, miliseconds, track_artist)
-			VALUES ("' . mysql_real_escape_string($artist) . '",
-			"' . mysql_real_escape_string($title) . '",
-			"' . mysql_real_escape_string($currentDirectory . $currentSong) . '",
-			' . ((is_numeric($track)) ? (int) $track : 'NULL'). ',
-			"' . mysql_real_escape_string($album_id) . '",
-			1,
-			\'' . $album_id . '_' . fileId($cfg['media_dir'] . $currentDirectory . $currentSong) .'\',
-			'. (int)$mtime . ',
-			'. (int)$genre_id .',
-			'. (int)$date .',
-			1,
-			'. $time*1000 .',
-			\'' . mysql_real_escape_string($artist) . '\'
-			
+		mysql_query('
+			INSERT INTO track (
+				artist,
+				title,
+				relative_file,
+				relative_file_hash,
+				number,
+				album_id,
+				updated,
+				track_id,
+				filemtime,
+				genre,
+				year,
+				disc,
+				miliseconds,
+				track_artist
+			)
+			VALUES (
+				"' . mysql_real_escape_string($artist) . '",
+				"' . mysql_real_escape_string($title) . '",
+				"' . mysql_real_escape_string($currentDirectory . $currentSong) . '",
+				"' . pathhash($currentDirectory . $currentSong) . '",
+				' . ((is_numeric($track)) ? (int) $track : 'NULL'). ',
+				"' . mysql_real_escape_string($album_id) . '",
+				1,
+				\'' . $album_id . '_' . fileId($cfg['media_dir'] . $currentDirectory . $currentSong) .'\',
+				'. (int)$mtime . ',
+				'. (int)$genre_id .',
+				'. (int)$date .',
+				1,
+				'. $time*1000 .',
+				\'' . mysql_real_escape_string($artist) . '\'
 			)'
 		);
 	} else {

@@ -296,6 +296,7 @@ CREATE TABLE IF NOT EXISTS `share_stream` (
 --
 
 CREATE TABLE IF NOT EXISTS `track` (
+  `id` int(11) NOT NULL,
   `artist` varchar(255) NOT NULL DEFAULT '',
   `title` varchar(255) NOT NULL DEFAULT '',
   `featuring` varchar(255) NOT NULL DEFAULT '',
@@ -330,8 +331,10 @@ CREATE TABLE IF NOT EXISTS `track` (
   `comment` text NOT NULL,
   `year` smallint(4) unsigned DEFAULT NULL,
   `dr` tinyint(3) unsigned  DEFAULT NULL,
+  PRIMARY KEY (`id`)
   KEY `artist` (`artist`),
   KEY `title` (`title`),
+  KEY `relative_file_hash` (`relative_file_hash`),
   KEY `featuring` (`featuring`),
   KEY `audio_dataformat` (`audio_dataformat`),
   KEY `video_dataformat` (`video_dataformat`),
