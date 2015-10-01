@@ -382,7 +382,11 @@ $cfg['album_copy']                  = true; //available when $cfg['external_stor
 //  | new: New added album.                                                  |
 //  | played: Recently played or streamed album.                             |
 //  +------------------------------------------------------------------------+
-$cfg['image_read_embedded']         = true;
+$cfg['image_read_embedded']         = true; // search for embedded cpver in music-file	
+$cfg['image_look_current_directory']= true; // search for images in current directory without worrying about a filename 
+$cfg['image_look_parent_directory'] = true; // search for images in parent directory without worrying about a filename
+$cfg['image_look_cover_directory']  = true;	// serach for subdirectory containing image-files without worrying about a filename
+
 $cfg['image_share']                 = true;
 $cfg['image_share_mode']            = 'played';
 $cfg['image_front']                 = 'folder'; // .jpg and .png
@@ -390,7 +394,34 @@ $cfg['image_back']                  = 'cd_back';  // .jpg and .png
 $cfg['image_front_cover_treshold']  = 90000;      // 300 * 300
 
 
-
+//  +------------------------------------------------------------------------+
+//  | Common Artwork Directory Names                                         |
+//  +------------------------------------------------------------------------+
+//  | Only relevant for $cfg['image_look_cover_directory'] = true            |
+//  | Search for a subdirectory in albumdirectory whichs lowercase dirname   |
+//  | (without spaces or special chars) matches entries below                |
+//  | pluralizing trailing s will be added automatically                     |
+//  +------------------------------------------------------------------------+
+$cfg['common_artwork_dir_names'][] = 'cover';	// covers
+$cfg['common_artwork_dir_names'][] = 'artwork'; // artworks
+$cfg['common_artwork_dir_names'][] = 'booklet'; // booklets
+$cfg['common_artwork_dir_names'][] = 'image';   // images
+$cfg['common_artwork_dir_names'][] = 'picture'; // pictures
+$cfg['common_artwork_dir_names'][] = 'extra';   // extras
+$cfg['common_artwork_dir_names'][] = 'coverart';// coverarts
+$cfg['common_artwork_dir_names'][] = 'scan';    // scans
+$cfg['common_artwork_dir_names'][] = 'art';     // arts
+$cfg['common_artwork_dir_names'][] = 'leaflet'; // leaflets
+$cfg['common_artwork_dir_names'][] = 'jpg';     // jpgs
+$cfg['common_artwork_dir_names'][] = 'jpeg';    // jpegs
+$cfg['common_artwork_dir_names'][] = 'png';     // pngs
+$cfg['common_artwork_dir_names'][] = 'assortedcover';
+$cfg['common_artwork_dir_names'][] = 'assortedartwork';
+$cfg['common_artwork_dir_names'][] = 'someartwork';
+$cfg['common_artwork_dir_names'][] = 'artworkandbooklet';
+$cfg['common_artwork_dir_names'][] = 'artworkbooklet';
+$cfg['common_artwork_dir_names'][] = 'artworkandextra';
+		
 
 //  +------------------------------------------------------------------------+
 //  | No album artist                                                        |
