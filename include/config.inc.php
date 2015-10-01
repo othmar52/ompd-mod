@@ -49,7 +49,7 @@ $cfg['mysql_auto_create_db']       = true;
 //  | Linux/Unix/OSX: '/var/mpd/music/';                                     |
 //  +------------------------------------------------------------------------+
 $cfg['media_dir']                   = '/share/HDA_DATA/ompd/';
-
+$cfg['mpd_db_file']                 = "/var/lib/mpd/database";
 
 
 
