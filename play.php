@@ -1,10 +1,10 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | O!MPD, Copyright © 2015 Artur Sierzant		                         |
+//  | O!MPD, Copyright ï¿½ 2015 Artur Sierzant		                         |
 //  | http://www.ompd.pl                                             		 |
 //  |                                                                        |
 //  |                                                                        |
-//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
+//  | netjukebox, Copyright ï¿½ 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -917,34 +917,32 @@ function playlistTrack() {
 		}
 	}  */
 	
+	$other_track_version = false;
 	
-	
-	
-	$title = findCoreTrackTitle($title);
-	$title = mysql_real_escape_like($title);
-	
-	$separator = $cfg['separator'];
-	$count = count($separator);
-	
-	$query_string = '';
-	$i=0;
-	for ($i=0; $i<$count; $i++) {
-		$query_string = $query_string . ' OR LOWER(title) LIKE "' . $title . $separator[$i] . '%"'; 
-	}
-	
-	$filter_query = 'WHERE (LOWER(title) = "' . ($title) . '" ' . $query_string . ')';
-	
-	$query = mysql_query('SELECT title FROM track ' . $filter_query);
-	
-	if (strlen($title) > 0) {
-		$num_rows = mysql_num_rows($query);
-		if ($num_rows > 1) {
-			$other_track_version = true;
+	if($cfg['enable_core_track_search'] === TRUE) {
+		$title = findCoreTrackTitle($title);
+		$title = mysql_real_escape_like($title);
+		
+		$separator = $cfg['separator'];
+		$count = count($separator);
+		
+		$query_string = '';
+		$i=0;
+		for ($i=0; $i<$count; $i++) {
+			$query_string = $query_string . ' OR LOWER(title) LIKE "' . $title . $separator[$i] . '%"'; 
+		}
+		
+		$filter_query = 'WHERE (LOWER(title) = "' . ($title) . '" ' . $query_string . ')';
+		$query = mysql_query('SELECT title FROM track ' . $filter_query);
+		
+		if (strlen($title) > 0) {
+			$num_rows = mysql_num_rows($query);
+			if ($num_rows > 1) {
+				$other_track_version = true;
+			}
 		}
 	}
-	else {
-		$other_track_version = false;
-	}
+
 	
 	$exploded = multiexplode($cfg['artist_separator'],$track['track_artist']);
 	
