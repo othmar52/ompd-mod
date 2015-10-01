@@ -1,2 +1,4 @@
 /tmp/*
 /cache/*
+/include/config.local.inc.php
+
