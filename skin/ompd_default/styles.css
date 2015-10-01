@@ -712,9 +712,10 @@ td.menu_bottom_right			{width: 0.769em;}
 	text-align: center;
 	white-space: nowrap;
 	text-transform: uppercase;*/
-	font-weight: normal; 
+	font-weight: normal;
+	max-width: 15em;
+	overflow: hidden;
 }
-
 
 .paginator-nav span a, .buttons span a{
 	color: #fff;
