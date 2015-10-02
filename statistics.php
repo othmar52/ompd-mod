@@ -1,10 +1,10 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | O!MPD, Copyright © 2015 Artur Sierzant		                         |
+//  | O!MPD, Copyright ï¿½ 2015 Artur Sierzant		                         |
 //  | http://www.ompd.pl                                             		 |
 //  |                                                                        |
 //  |                                                                        |
-//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
+//  | netjukebox, Copyright ï¿½ 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -572,11 +572,17 @@ function duplicateContent() {
 <table cellspacing="0" cellpadding="0" class="border">
 <?php
 	$i=0;
-	$query = mysql_query('SELECT SUBSTRING_INDEX(track_id, "_", -1) AS hash, filesize, COUNT(SUBSTRING_INDEX(track_id, "_", -1)) AS n1, COUNT(filesize) AS n2
+	$query = mysql_query('
+		SELECT
+			SUBSTRING_INDEX(track_id, "_", -1) AS hash,
+			filesize,
+			COUNT(SUBSTRING_INDEX(track_id, "_", -1)) AS n1,
+			COUNT(filesize) AS n2
 		FROM track
 		GROUP BY filesize, hash
 		HAVING n1 > 1 AND n2 > 1
-		ORDER BY filesize');
+		ORDER BY filesize
+		LIMIT 1000');
 	while ($track = mysql_fetch_assoc($query)) {
 		if ($i > 1) echo '<tr class="line"><td colspan="11"></td></tr>'; ?>
 <tr class="header">
