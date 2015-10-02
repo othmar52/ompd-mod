@@ -208,6 +208,7 @@ function updateSong($currentSong,
 		$allAlbumIds[$cfg['media_dir'] . $currentDirectory] = $album_id;
 		
 		// initial insert with album-tags based on (first) track
+		# genre is currently '1(Unknown)' - it will be updated in on of the next import/update phases 
 		mysql_query("
 			INSERT INTO album(
 				artist,

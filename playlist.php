@@ -261,8 +261,8 @@ for ($i=0; $i < $listlength; $i++)
 				track.featuring,
 				track.miliseconds,
 				track.track_id,
-				track.genre,
-				album.genre_id,
+				track.genre AS genre_id,
+				genre.genre AS genre_string,
 				track.audio_dataformat,
 				track.audio_bits_per_sample,
 				track.audio_sample_rate,
@@ -270,15 +270,15 @@ for ($i=0; $i < $listlength; $i++)
 				track.number,
 				track.track_id,
 				track.year as trackYear
-			FROM track, album
-			WHERE track.album_id=album.album_id
+			FROM track, genre
+			WHERE track.genre=genre.genre_id
 			  AND track.relative_file_hash= "' . pathhash($file[$i]) . '"
 			'
 	);
 	$table_track = mysql_fetch_assoc($query);
 	$playtime[] = (int) $table_track['miliseconds'];
 	$track_id[] = (string) $table_track['track_id'];
-	$genre_id[] = (string) $table_track['genre_id'];
+	$genre_id[(int) $table_track['genre_id']] = (string) $table_track['genre_string'];
 	$number[] = (string) $table_track['number'];
 	if (!isset($table_track['artist'])) {
 		$table_track['artist']	= $file[$i];
@@ -332,7 +332,7 @@ for ($i=0; $i < $listlength; $i++)
 	</td>
 
 	<td class="time pl-genre">
-	<a href="index.php?action=view2&order=artist&sort=asc&genre_id=<?php echo $table_track['genre_id'] ?>"><?php echo $table_track['genre'] ?></a>
+	<a href="index.php?action=view2&order=artist&sort=asc&genre_id=<?php echo $table_track['genre_id'] ?>"><?php echo $table_track['genre_string'] ?></a>
 	</td>
 	
 	<td><?php if (isset($table_track['featuring'])) echo html($table_track['featuring']); ?></td>

@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `album` (
   `album` varchar(255) NOT NULL DEFAULT '',
   `year` smallint(4) unsigned DEFAULT NULL,
   `month` tinyint(2) unsigned DEFAULT NULL,
-  `genre_id` varchar(10) NOT NULL DEFAULT '',
+  `genre_id` int(11) unsigned NOT NULL DEFAULT '0',
   `album_add_time` int(10) unsigned NOT NULL DEFAULT '0',
   `discs` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `image_id` varchar(30) NOT NULL DEFAULT '',
@@ -326,7 +326,7 @@ CREATE TABLE IF NOT EXISTS `track` (
   `track_id` varchar(20) NOT NULL DEFAULT '',
   `transcoded` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `updated` tinyint(1) unsigned NOT NULL DEFAULT '0',
-  `genre` text NOT NULL,
+  `genre` int(11) unsigned NOT NULL DEFAULT '0',
   `track_artist` varchar(255) NOT NULL,
   `comment` text NOT NULL,
   `year` smallint(4) unsigned DEFAULT NULL,
@@ -341,6 +341,7 @@ CREATE TABLE IF NOT EXISTS `track` (
   KEY `album_id` (`album_id`,`disc`),
   KEY `track_id` (`track_id`),
   KEY `updated` (`updated`),
+  KEY `genre` (`genre`),
   KEY `error` (`error`),
   KEY `transcoded` (`transcoded`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

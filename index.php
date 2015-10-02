@@ -1,10 +1,10 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | O!MPD, Copyright © 2015 Artur Sierzant		                         |
+//  | O!MPD, Copyright ï¿½ 2015 Artur Sierzant		                         |
 //  | http://www.ompd.pl                                             		 |
 //  |                                                                        |
 //  |                                                                        |
-//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
+//  | netjukebox, Copyright ï¿½ 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -240,7 +240,7 @@ function selectTab(obj) {
 function view1() {
 	global $cfg, $db;
 	authenticate('access_media');
-	
+	// TODO: check if genre_id is is genre_id or genre_string
 	$artist	 	= get('artist');
 	$genre_id 	= get('genre_id');
 	$filter  	= get('filter');
@@ -398,7 +398,7 @@ function view2() {
 		
 		//if (substr($genre_id, -1) == '~')	$filter_query = 'WHERE genre_id = "' . mysql_real_escape_string(substr($genre_id, 0, -1)) . '"';
 		//else								
-		$filter_query = 'WHERE genre_id LIKE "' . mysql_real_escape_like($genre_id) . '"';}
+		$filter_query = 'WHERE genre_id =' . (int)($genre_id) . '';}
 		
 		else if ($title) {
 			genreNavigator('');
@@ -459,6 +459,7 @@ function view2() {
 		else
 			message(__FILE__, __LINE__, 'error', '[b]Unsupported input value for[/b][br]order');
 		
+		#error_log('SELECT album, artist, artist_alphabetic, year, month, genre_id, image_id, album_id FROM album ' . $filter_query . ' ' . $order_query);
 		$query = mysql_query('SELECT album, artist, artist_alphabetic, year, month, genre_id, image_id, album_id FROM album ' . $filter_query . ' ' . $order_query);
 		
 		$cfg['items_count'] = $album_count = mysql_num_rows($query);

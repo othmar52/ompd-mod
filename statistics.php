@@ -582,7 +582,8 @@ function duplicateContent() {
 		GROUP BY filesize, hash
 		HAVING n1 > 1 AND n2 > 1
 		ORDER BY filesize
-		LIMIT 1000');
+		LIMIT 1000'
+	);
 	while ($track = mysql_fetch_assoc($query)) {
 		if ($i > 1) echo '<tr class="line"><td colspan="11"></td></tr>'; ?>
 <tr class="header">
@@ -603,10 +604,16 @@ function duplicateContent() {
 	$hash = $track['hash'];
 	$filesize = $track['filesize'];
 	$i=0;
-	$query2 = mysql_query('SELECT relative_file, miliseconds, track_id FROM track
+	$query2 = mysql_query('
+		SELECT
+			relative_file,
+			miliseconds,
+			track_id
+		FROM track
 		WHERE SUBSTRING_INDEX(track_id, "_", -1) = "' . mysql_real_escape_string($hash) . '"
 		AND filesize = ' . (int) $filesize . '
-		ORDER BY relative_file');
+		ORDER BY relative_file
+		LIMIT');
 	while ($track = mysql_fetch_assoc($query2)) { ?>
 <tr class="<?php echo ($i++ & 1) ? 'even' : 'odd'; ?> mouseover">
 	<td></td>
