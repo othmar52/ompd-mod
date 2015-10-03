@@ -957,8 +957,8 @@ function playlistTrack() {
 	$data['track_artist']	= $exploded;
 	$data['track_artist_url']	= $exploded;
 	$data['track_artist_url_all']	= (string) rawurlencode($track['track_artist']);
-	$data['title']		= (string) $track['title'];
-	$data['album']		= (string) $track['album'];
+	$data['title']		= (string) (trim($track['title']) !== '') ? $track['title'] : basename($track['relative_file']) ;
+	$data['album']		= (string) (trim($track['album']) !== '') ? $track['album'] : basename(dirname($track['relative_file'])) ;
 	//$data['album']		= (string) $title;
 	$data['by']			= (string) $by;
 	$data['image_id']	= (string) $track['image_id'];
