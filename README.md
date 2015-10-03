@@ -8,6 +8,8 @@ codebase is a mess but look&feel is nice
 - omnipresent tiny player with currently played trackinfo in header
 - alternative dark theme for whole frontend
 - add a browser player (jPlayer?) as an alternative
+- add possibility to browse in filestructure
+- allow multiple images for album and display ist in albumview
 
 ###Album-View
 - "Play Album link" should append to current playlist and play instead of replacing current playlist
