@@ -84,7 +84,7 @@ function search_all() {
 	album_artist();
 	album_title();
 	track_artist();
-	directory_match();
+	filesystem_match();
 	track_title();
 	
 	echo '<script type="text/javascript">';
@@ -359,35 +359,42 @@ function album_title() {
 
 	
 //  +------------------------------------------------------------------------+
-//  | directory match                                                          |
+//  | filesystem match                                                          |
 //  +------------------------------------------------------------------------+
 	
-function directory_match() {
+function filesystem_match() {
 	global $cfg, $db, $size, $search_string, $group_found, $match_found;
 	
-	$query = mysql_query('SELECT album_id,path FROM album_id WHERE path like "%' . mysql_real_escape_string($search_string) . '%" ORDER BY path LIMIT 1000');	
+	$query = mysql_query('
+		SELECT album_id,relative_file AS path
+		FROM track
+		WHERE relative_file LIKE "%' . mysql_real_escape_string($search_string) . '%"
+		GROUP BY album_id
+		ORDER BY path
+		LIMIT 1000'
+	);	
 
 	$rows = mysql_num_rows($query);
 	if ($rows > 0) {
 		$match_found = true;
 		$group_found = 'DD';
 	?>
-	<h1 onclick='toggleSearchResults("DD");' class="pointer"><i id="iconSearchResultsDD" class="fa fa-chevron-circle-down icon-anchor"></i> Path (<?php if ($rows > 1) {
+	<h1 onclick='toggleSearchResults("DD");' class="pointer">
+		<i id="iconSearchResultsDD" class="fa fa-chevron-circle-down icon-anchor"></i> Path (<?php if ($rows > 1) {
 			echo $rows . " matches found";
 		}
 		else {
-			$album = mysql_fetch_assoc($query);
-			echo $rows . " match found: " . $album['path'];
+			echo $rows . " match found";
 		}
 		?>)
 	</h1>
 	<div class="search_artist" id="searchResultsDD">
 	<?php
-	if ($rows > 1) {
+	if ($rows > 0) {
 		while ($album = mysql_fetch_assoc($query)) {
 	?>
 	<p>
-	<a href="index.php?action=view3&amp;album_id=<?php echo rawurlencode($album['album_id']); ?>"><?php echo html(basename($album['path'])); ?></a>
+	<a href="index.php?action=view3&amp;album_id=<?php echo rawurlencode($album['album_id']); ?>"><?php echo html(basename(dirname($album['path']))); ?></a>
 	</p>
 	<?php
 		}
@@ -397,7 +404,7 @@ function directory_match() {
 	<?php
 	} 
 }
-// End of directory match
+// End of filesystem match
 
 
 
