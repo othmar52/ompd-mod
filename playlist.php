@@ -264,6 +264,7 @@ for ($i=0; $i < $listlength; $i++)
 			SELECT
 				track.title,
 				track.artist,
+				track.relative_file,
 				track.track_artist,
 				track.featuring,
 				track.miliseconds,
@@ -293,6 +294,13 @@ for ($i=0; $i < $listlength; $i++)
 	}
 	$query2 = mysql_query('SELECT album, year, image_id FROM album WHERE album_id="' . $table_track['album_id'] . '"');
 	$image_id = mysql_fetch_assoc($query2);
+	$table_track['title'] = ($table_track['title'] == '')
+		? basename($table_track['relative_file'])
+		: $table_track['title'];
+		
+	$image_id['album'] = ($image_id['album'] == '')
+		? basename(dirname($table_track['relative_file']))
+		: $image_id['album'];
 ?>
 <tr class="<?php if ($i == $listpos) echo 'select'; else echo ($i & 1) ? 'even mouseover' : 'odd mouseover'; ?>" id="track<?php echo $i; ?>" style="display:table-row;">
 	
