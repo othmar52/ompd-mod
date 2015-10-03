@@ -29,3 +29,13 @@ codebase is a mess but look&feel is nice
 - tree schemed genre-basis fur genres/subgenres/subsubgenres/styles
 - posibility to assign a country to track/album
  
+
+###404 Request
+create these files or remove urls from markup/css/js
+		favicon.ico
+		image/o_lg.png
+		skin/ompd_default/img/small_back.png
+		skin/ompd_default/img/small_delete.png
+		skin/ompd_default/img/small_edit.png
+		skin/ompd_default/img/small_hide.png
+		skin/ompd_default/img/small_show.png
