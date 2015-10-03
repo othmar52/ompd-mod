@@ -70,6 +70,13 @@ else
 
 $featuring = false;
 for ($i=0; $i < $listlength && !$featuring; $i++) {
+	if($cfg['media_dir_alternative_path'] !== '' && $file[$i][0] === '/') {
+		$file[$i] = substr(
+			$file[$i],
+			strlen($cfg['media_dir_alternative_path'])
+		);
+	}
+	
 	$query = mysql_query('SELECT featuring FROM track WHERE featuring != "" AND relative_file = "' . mysql_real_escape_string($file[$i]) . '"');
 	if (mysql_fetch_row($query)) $featuring = true;
 }

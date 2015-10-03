@@ -52,6 +52,17 @@ $cfg['media_dir']                   = '/share/HDA_DATA/ompd/';
 $cfg['mpd_db_file']                 = "/var/lib/mpd/database";
 
 
+//  +------------------------------------------------------------------------+
+//  | Media directory alternative path                                       |
+//  +------------------------------------------------------------------------+
+//  | when playing a playlist with absolute filepaths it wont be compatible  |
+//  | to track.relative_file                                                 |
+//  | the value of this variable will be stripped from recieved absolute path|
+//  |                                                                        |
+//  | Windows:        'D:/Media/';                                           |
+//  | Linux/Unix/OSX: '/home/username/music/';                               |
+//  +------------------------------------------------------------------------+
+$cfg['media_dir_alternative_path']  = '';
 
 //  +------------------------------------------------------------------------+
 //  | Source of artist/album title/track title								 |
