@@ -119,7 +119,7 @@ function scanAndUpdateTrack($musicFilePath, $track_id, $album_id) {
 
 	$a = array_values($ThisFileInfo['comments']['comment']);
 	if (isset($a[0]))
-		$comment = trim(strip_tags($a[0]));
+		$comment = preg_replace('!\s+!', ' ', trim(strip_tags($a[0])));
 	else 
 		$comment = '';
 	
