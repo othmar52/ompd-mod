@@ -120,6 +120,10 @@ foreach($dbfile as $line) {
 		}
 		#continue;
 	}
+	if(isset($attr[1]) === TRUE) {
+		// believe it or not - some people store html in their tags
+		$attr[1] = preg_replace('!\s+!', ' ', (trim(strip_tags($attr[1]))));
+	}
 	switch($attr[0]) {
 		case 'directory':
 			$currentSection = "directory";
