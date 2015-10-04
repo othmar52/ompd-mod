@@ -1,10 +1,10 @@
 <?php
 //  +------------------------------------------------------------------------+
-//  | O!MPD, Copyright © 2015 Artur Sierzant		                         |
+//  | O!MPD, Copyright ï¿½ 2015 Artur Sierzant		                         |
 //  | http://www.ompd.pl                                             		 |
 //  |                                                                        |
 //  |                                                                        |
-//  | netjukebox, Copyright © 2001-2012 Willem Bartels                       |
+//  | netjukebox, Copyright ï¿½ 2001-2012 Willem Bartels                       |
 //  |                                                                        |
 //  | http://www.netjukebox.nl                                               |
 //  | http://forum.netjukebox.nl                                             |
@@ -42,13 +42,26 @@ $quality	= get('quality') == 'hq' ? 'hq' : 'lq';
 //$quality	= 'hq';
 $image	 	= get('image');
 
-if		(isset($image_id))		image($image_id, $quality, $track_id);
+$album_id 	= get('album_id');
+$action 	= get('action');
+
+if($action == 'viewall' && $album_id)		viewall($album_id);
+elseif		(isset($image_id))	image($image_id, $quality, $track_id);
 elseif	(isset($image))			resampleImage($image);
 elseif	($cfg['image_share'])	shareImage();
 exit();
 
 
-
+function viewall($album_id) {
+	$res = mysql_query('SELECT image_id  FROM bitmap WHERE album_id="' . mysql_real_escape_string($album_id) . '"');
+	if(mysql_num_rows($res) < 2) {
+		exit;
+	}
+	while($rec = mysql_fetch_assoc($res)) {
+		echo '<img width="50" height="50" src="image.php?image_id=' . $rec['image_id'] . '&quality=hq" />';
+	}
+	exit;
+}
 
 //  +------------------------------------------------------------------------+
 //  | Image                                                                  |

@@ -1192,6 +1192,7 @@ function view3() {
 	</div>
 	<span id="image">
 		<img id="image_in" src="image/transparent.gif" alt="">
+		<div id="image_all">ALL IMAGES</div>
 	</span>
 </div>
 
@@ -1555,6 +1556,11 @@ window.onload = function () {
     //setAlbumInfoWidth();
 	setBarLength();
 	$("#image_in").attr("src","image.php?image_id=<?php echo $image_id ?>&quality=hq");
+	$.ajax({
+		url: 'image.php?album_id=<?php echo $album_id ?>&quality=hq&action=viewall'
+	}).done(function(response) {
+		$("#image_all").html(response)
+	});
 	$("#cover-spinner").hide();
 	
 	/* var im = "image.php?image_id=<?php echo $image_id ?>&quality=hq"

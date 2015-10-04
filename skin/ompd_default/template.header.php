@@ -13,7 +13,7 @@ if (isset($header) == false)
 <link rel="icon" type="image/png" sizes="196x196" href="image/icon.png">
 
 
-<script src="jquery/jquery-1.11.3.min.js"></script>
+<script src="jquery/jquery-2.1.4.min.js"></script>
 <script src="javascript-src/spin.min.js"></script>
 <script src="javascript-src/arts.functions.js"></script>
 <script src="javascript-src/jquery.touchSwipe.min.js"></script>
@@ -149,6 +149,11 @@ $(document).ready(function () {
         $('html, body').animate({scrollTop: 0}, duration);
         return false;
     })
+
+
+	$('#image_all').on('click', 'img', function(){
+		$("#image_in").attr("src", $(this).attr('src'));
+	});
 	
 });
 
