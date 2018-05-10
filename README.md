@@ -1,5 +1,5 @@
 # ompd-mod
-PHP/JS based MPD-web-client which is a fork of ompd.pl which is a fork of netjukebox.pl
+PHP/JS based MPD-web-client which is a fork of ompd.pl which is a fork of www.netjukebox.nl
 
 codebase is a mess but look&feel is nice
 
